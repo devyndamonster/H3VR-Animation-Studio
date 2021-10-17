@@ -1,4 +1,5 @@
 ﻿using FistVR;
+using H3VRAnimator.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,8 @@ namespace H3VRAnimator
     public class AnimationPath
     {
         public List<PathAnchor> points = new List<PathAnchor>();
+        public bool isBezier = true;
+        public int bezierMidPoints = 10;
 
 
         public void AddPoint(Vector3 position)
@@ -18,20 +21,19 @@ namespace H3VRAnimator
             GameObject anchorObject = new GameObject("MovablePoint");
             anchorObject.transform.position = position;
 
-            FVRViveHand otherHand = H3VRAnimator.GetNonPointingHand();
+            FVRViveHand otherHand = AnimationUtils.GetNonPointingHand();
             if (otherHand.CurrentInteractable != null && otherHand.CurrentInteractable.GetComponent<SpectatorPanel>() == null)
             {
                 anchorObject.transform.SetParent(otherHand.CurrentInteractable.transform);
             }
 
             PathAnchor anchorComp = anchorObject.AddComponent<PathAnchor>();
-
             points.Add(anchorComp);
 
 
 
-            //Set bezier curve points visible
-            if (points.Count == 1)
+            //Set bezier curve points visibility
+            if (points.Count == 1 || !isBezier)
             {
                 anchorComp.forwardPoint.gameObject.SetActive(false);
                 anchorComp.backPoint.gameObject.SetActive(false);
@@ -53,29 +55,33 @@ namespace H3VRAnimator
 
         public void DrawPath()
         {
-            /*
-            for (int i = 1; i < points.Count; i++)
+            if (isBezier)
             {
-                Popcron.Gizmos.Line(points[i - 1].transform.position, points[i].transform.position, Color.red);
-            }
-            */
-
-            for (int i = 1; i < points.Count; i++)
-            {
-                PathAnchor from = points[i - 1];
-                PathAnchor to = points[i];
-
-                Vector3 prevPoint = from.transform.position;
-
-                for(int j = 1; j <= 10; j++)
+                for (int i = 1; i < points.Count; i++)
                 {
-                    float t = j / 10f;
+                    PathAnchor from = points[i - 1];
+                    PathAnchor to = points[i];
 
-                    Vector3 nextPoint = CurvePosition(from, to, t);
+                    Vector3 prevPoint = from.transform.position;
 
-                    Popcron.Gizmos.Line(prevPoint, nextPoint, Color.red);
+                    for (int j = 1; j <= bezierMidPoints; j++)
+                    {
+                        float t = ((float)j) / bezierMidPoints;
 
-                    prevPoint = nextPoint;
+                        Vector3 nextPoint = GetLerp(from, to, t);
+
+                        Popcron.Gizmos.Line(prevPoint, nextPoint, Color.red);
+
+                        prevPoint = nextPoint;
+                    }
+                }
+            }
+
+            else
+            {
+                for (int i = 1; i < points.Count; i++)
+                {
+                    Popcron.Gizmos.Line(points[i - 1].transform.position, points[i].transform.position, Color.red);
                 }
             }
         }
@@ -90,12 +96,20 @@ namespace H3VRAnimator
         }
 
 
-        public Vector3 CurvePosition(PathAnchor from, PathAnchor to, float t)
+        public Vector3 GetLerp(PathAnchor from, PathAnchor to, float t)
         {
-            Vector3 p0 = QuatraticLerp(from.transform.position, from.forwardPoint.transform.position, to.backPoint.transform.position, t);
-            Vector3 p1 = QuatraticLerp(from.forwardPoint.transform.position, to.backPoint.transform.position, to.transform.position, t);
-            return Vector3.Lerp(p0, p1, t);
+            if (isBezier)
+            {
+                Vector3 p0 = QuatraticLerp(from.transform.position, from.forwardPoint.transform.position, to.backPoint.transform.position, t);
+                Vector3 p1 = QuatraticLerp(from.forwardPoint.transform.position, to.backPoint.transform.position, to.transform.position, t);
+                return Vector3.Lerp(p0, p1, t);
+            }
+            else
+            {
+                return Vector3.Lerp(from.transform.position, to.transform.position, t);
+            }
         }
+
 
         public void DestroyPath()
         {
@@ -107,21 +121,36 @@ namespace H3VRAnimator
             points.Clear();
         }
 
+
+        public void ToggleBezier()
+        {
+            isBezier = !isBezier;
+
+            for (int i = 0; i < points.Count; i++)
+            {
+                points[i].forwardPoint.buttonPoint.gameObject.SetActive(isBezier && i < points.Count - 1);
+                points[i].backPoint.buttonPoint.gameObject.SetActive(isBezier && i > 0);
+            }
+        }
+
+
         public void SetGizmosEnabled(bool enabled)
         {
-            foreach(PathAnchor point in points)
+            for(int i = 0; i < points.Count; i++)
             {
-                point.drawGizmos = enabled;
-                point.rotationPoint.drawGizmos = enabled;
-                point.speedPoint.drawGizmos = enabled;
-                point.forwardPoint.drawGizmos = enabled;
-                point.backPoint.drawGizmos = enabled;
+                points[i].drawGizmos = enabled;
+                points[i].rotationPoint.drawGizmos = enabled;
+                points[i].speedPoint.drawGizmos = enabled;
+                points[i].forwardPoint.drawGizmos = enabled;
+                points[i].backPoint.drawGizmos = enabled;
 
-                point.buttonPoint.gameObject.SetActive(enabled);
-                point.rotationPoint.buttonPoint.gameObject.SetActive(enabled);
-                point.speedPoint.buttonPoint.gameObject.SetActive(enabled);
-                point.forwardPoint.buttonPoint.gameObject.SetActive(enabled);
-                point.backPoint.buttonPoint.gameObject.SetActive(enabled);
+                points[i].buttonPoint.gameObject.SetActive(enabled);
+                points[i].rotationPoint.buttonPoint.gameObject.SetActive(enabled);
+                points[i].speedPoint.buttonPoint.gameObject.SetActive(enabled);
+
+                //Control points have special cases for if they're on the end or not
+                points[i].forwardPoint.buttonPoint.gameObject.SetActive(enabled && i < points.Count - 1);
+                points[i].backPoint.buttonPoint.gameObject.SetActive(enabled && i > 0);
             }
         }
     }

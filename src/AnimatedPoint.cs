@@ -1,4 +1,5 @@
 ﻿using FistVR;
+using H3VRAnimator.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,7 @@ namespace H3VRAnimator
     public class AnimatedPoint : MonoBehaviour
     {
         public AnimationPath path;
-        public FVRInteractiveObject interactable;
+        public FVRPhysicalObject interactable;
         public bool drawGizmos = true;
 
         private int moveToIndex = 1;
@@ -32,7 +33,7 @@ namespace H3VRAnimator
             PathAnchor from = path.points[moveToIndex - 1];
             PathAnchor to = path.points[moveToIndex];
 
-            transform.position = path.CurvePosition(from, to, progress);
+            transform.position = path.GetLerp(from, to, progress);
             transform.rotation = Quaternion.Slerp(from.rotationPoint.transform.rotation, to.rotationPoint.transform.rotation, progress);
 
             progress += Mathf.Lerp(from.speedPoint.speed, to.speedPoint.speed, progress) * Time.deltaTime / Vector3.Distance(from.transform.position, to.transform.position);

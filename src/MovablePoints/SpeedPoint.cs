@@ -10,11 +10,12 @@ namespace H3VRAnimator
 {
     public class SpeedPoint : MovablePoint
     {
-
         public float speed = 0.3f;
 
         private Text speedText;
         private float speedMultiplier = 1f;
+
+
 
         public override void Awake()
         {

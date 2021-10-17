@@ -1,4 +1,6 @@
 ﻿using FistVR;
+using H3VRAnimator.Logging;
+using H3VRAnimator.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -54,7 +56,6 @@ namespace H3VRAnimator
         {
             AnimLogger.Log("Button pressed!");
 
-
             //If the hand is already set, then we unfollow the hand
             if(activeHand != null)
             {
@@ -62,8 +63,7 @@ namespace H3VRAnimator
                 return;
             }
 
-            activeHand = H3VRAnimator.GetPointingHand();
-
+            activeHand = AnimationUtils.GetPointingHand();
             savedDist = Vector3.Distance(activeHand.transform.position, transform.position);
         }
 
@@ -97,10 +97,10 @@ namespace H3VRAnimator
                 
             }
 
-            DrawPoint();
+            DrawGizmos();
         }
 
-        public void DrawPoint()
+        public virtual void DrawGizmos()
         {
             if (!drawGizmos) return;
             Popcron.Gizmos.Sphere(transform.position, radius, pointColor);

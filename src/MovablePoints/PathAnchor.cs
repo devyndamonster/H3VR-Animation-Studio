@@ -11,8 +11,8 @@ namespace H3VRAnimator
 
         public RotationPoint rotationPoint;
         public SpeedPoint speedPoint;
-        public CurvePoint forwardPoint;
-        public CurvePoint backPoint;
+        public ControlPoint forwardPoint;
+        public ControlPoint backPoint;
 
         public override void Awake()
         {
@@ -35,14 +35,14 @@ namespace H3VRAnimator
             GameObject forward = new GameObject("ForwardPoint");
             forward.transform.SetParent(transform);
             forward.transform.position = transform.position + transform.forward * 0.06f;
-            forwardPoint = forward.AddComponent<CurvePoint>();
+            forwardPoint = forward.AddComponent<ControlPoint>();
             forwardPoint.pointColor = Color.grey;
             forwardPoint.radius = .005f;
 
             GameObject back = new GameObject("BackwardPoint");
             back.transform.SetParent(transform);
             back.transform.position = transform.position - transform.forward * 0.06f;
-            backPoint = back.AddComponent<CurvePoint>();
+            backPoint = back.AddComponent<ControlPoint>();
             backPoint.pointColor = Color.grey;
             backPoint.radius = .005f;
 

@@ -14,11 +14,11 @@ namespace H3VRAnimator
             base.Awake();
         }
 
-        public override void Update()
-        {
-            base.Update();
 
+        public override void DrawGizmos()
+        {
             if (!drawGizmos) return;
+            base.DrawGizmos();
             Popcron.Gizmos.Line(transform.position, transform.position + transform.forward * 0.03f, pointColor);
         }
     }
