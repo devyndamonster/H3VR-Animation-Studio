@@ -14,6 +14,10 @@ namespace H3VRAnimator
         private static Transform DisplayPoint = null;
         public static AnimationPath Path;
 
+        public static List<AnimatedPoint> Animations;
+
+        public static bool DrawGizmos = true;
+
         private void Awake()
         {
             AnimLogger.Init();
@@ -27,9 +31,10 @@ namespace H3VRAnimator
         {
             AnimLogger.Log("The Spectator Panel just started!");
             Path = new AnimationPath();
+            Animations = new List<AnimatedPoint>();
 
             GameObject createButton = Instantiate(__instance.List_Categories[0].gameObject, __instance.List_Categories[0].transform.parent);
-            createButton.transform.localPosition = new Vector3(-850, 900, 0);
+            createButton.transform.localPosition = new Vector3(-800, 900, 0);
             createButton.transform.localScale = new Vector3(3, 3, 2);
             createButton.gameObject.GetComponent<Text>().text = "Create Point";
 
@@ -52,9 +57,34 @@ namespace H3VRAnimator
 
 
 
+            GameObject clearButton = Instantiate(__instance.List_Categories[0].gameObject, __instance.List_Categories[0].transform.parent);
+            clearButton.transform.localPosition = new Vector3(200, 900, 0);
+            clearButton.transform.localScale = new Vector3(3, 3, 2);
+            clearButton.gameObject.GetComponent<Text>().text = "Clear Points";
+
+            Button clearComp = clearButton.gameObject.GetComponent<Button>();
+            clearComp.onClick = new Button.ButtonClickedEvent();
+
+            clearComp.onClick.AddListener(ClearPoints);
+
+
+
+            GameObject hideButton = Instantiate(__instance.List_Categories[0].gameObject, __instance.List_Categories[0].transform.parent);
+            hideButton.transform.localPosition = new Vector3(700, 900, 0);
+            hideButton.transform.localScale = new Vector3(3, 3, 2);
+            hideButton.gameObject.GetComponent<Text>().text = "Hide Gizmos";
+
+            Button hideComp = hideButton.gameObject.GetComponent<Button>();
+            hideComp.onClick = new Button.ButtonClickedEvent();
+
+            hideComp.onClick.AddListener(ToggleGizmos);
+
+
+
+
             GameObject drawPoint = new GameObject();
             drawPoint.transform.SetParent(createButton.transform.parent);
-            drawPoint.transform.localPosition = new Vector3(-850, 1000, 0);
+            drawPoint.transform.localPosition = new Vector3(-800, 1000, 0);
             DisplayPoint = drawPoint.transform;
 
             return true;
@@ -63,30 +93,14 @@ namespace H3VRAnimator
 
         private static void AddPoint(GameObject buttonObject)
         {
-            GameObject anchorObject = new GameObject("MovablePoint");
-            anchorObject.transform.position = DisplayPoint.position;
-            PathAnchor anchorComp = anchorObject.AddComponent<PathAnchor>();
-
-            Path.points.Add(anchorComp);
+            Path.AddPoint(buttonObject.transform.position);
         }
 
         private static void AddAnimatedPoint()
         {
+            FVRViveHand otherHand = GetNonPointingHand();
 
-            float distLeft = Vector3.Distance(GM.CurrentPlayerBody.LeftHand.position, DisplayPoint.position);
-            float distRight = Vector3.Distance(GM.CurrentPlayerBody.RightHand.position, DisplayPoint.position);
-            FVRViveHand furthestHand;
-
-            if (distLeft < distRight)
-            {
-                furthestHand = GM.CurrentPlayerBody.RightHand.GetComponent<FVRViveHand>();
-            }
-            else
-            {
-                furthestHand = GM.CurrentPlayerBody.LeftHand.GetComponent<FVRViveHand>();
-            }
-
-            FVRInteractiveObject interactable = furthestHand.CurrentInteractable;
+            FVRInteractiveObject interactable = otherHand.CurrentInteractable;
 
             if(interactable == null)
             {
@@ -97,12 +111,13 @@ namespace H3VRAnimator
             else
             {
                 AnimLogger.Log("Interactable was not null");
-                AnimLogger.Log("Hand: " + furthestHand);
-                interactable.IsHeld = false;
-                furthestHand.Input.IsGrabbing = false;
+                AnimLogger.Log("Hand: " + otherHand);
 
-                interactable.EndInteraction(furthestHand);
-                furthestHand.CurrentInteractable = null;
+                interactable.IsHeld = false;
+                otherHand.Input.IsGrabbing = false;
+
+                interactable.EndInteraction(otherHand);
+                otherHand.CurrentInteractable = null;
 
                 if(interactable is FVRPhysicalObject physObject)
                 {
@@ -118,6 +133,56 @@ namespace H3VRAnimator
             AnimatedPoint point = animatedPoint.AddComponent<AnimatedPoint>();
             point.path = Path;
             point.interactable = interactable;
+            point.drawGizmos = DrawGizmos;
+
+            Animations.Add(point);
+        }
+
+
+
+        public static FVRViveHand GetNonPointingHand()
+        {
+            FVRViveHand leftHand = GM.CurrentPlayerBody.LeftHand.GetComponent<FVRViveHand>();
+            FVRViveHand rightHand = GM.CurrentPlayerBody.RightHand.GetComponent<FVRViveHand>();
+
+            if (leftHand.PointingLaser.gameObject.activeSelf) return rightHand;
+
+            return leftHand;
+        }
+
+        public static FVRViveHand GetPointingHand()
+        {
+            FVRViveHand leftHand = GM.CurrentPlayerBody.LeftHand.GetComponent<FVRViveHand>();
+            FVRViveHand rightHand = GM.CurrentPlayerBody.RightHand.GetComponent<FVRViveHand>();
+
+            if (leftHand.PointingLaser.gameObject.activeSelf) return leftHand;
+
+            return rightHand;
+        }
+
+
+        private static void ClearPoints()
+        {
+            Path.DestroyPath();
+
+            foreach(AnimatedPoint point in Animations)
+            {
+                point.DestroyAnimation();
+            }
+
+            Animations.Clear();
+        }
+
+
+        private static void ToggleGizmos()
+        {
+            DrawGizmos = !DrawGizmos;
+            Path.SetGizmosEnabled(DrawGizmos);
+
+            foreach (AnimatedPoint point in Animations)
+            {
+                point.drawGizmos = DrawGizmos;
+            }
         }
 
 
@@ -125,6 +190,8 @@ namespace H3VRAnimator
         [HarmonyPrefix]
         public static bool DrawSphere(SpectatorPanel __instance)
         {
+            if (!DrawGizmos) return true;
+
             Popcron.Gizmos.Sphere(DisplayPoint.position, .01f, Color.blue);
 
             Path.DrawPath();

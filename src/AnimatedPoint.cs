@@ -9,18 +9,15 @@ namespace H3VRAnimator
 {
     public class AnimatedPoint : MonoBehaviour
     {
-
         public AnimationPath path;
-
         public FVRInteractiveObject interactable;
+        public bool drawGizmos = true;
 
         private int moveToIndex = 1;
-
         private float progress = 0;
 
         public void Update()
         {
-
             if (progress >= 1)
             {
                 progress = 0;
@@ -32,19 +29,21 @@ namespace H3VRAnimator
                 }
             }
 
-            transform.position = Vector3.Lerp(path.points[moveToIndex - 1].transform.position, path.points[moveToIndex].transform.position, progress);
-            transform.rotation = Quaternion.Slerp(path.points[moveToIndex - 1].rotation.transform.rotation, path.points[moveToIndex].rotation.transform.rotation, progress);
+            PathAnchor from = path.points[moveToIndex - 1];
+            PathAnchor to = path.points[moveToIndex];
 
-            progress += Mathf.Lerp(path.points[moveToIndex - 1].speed.speed, path.points[moveToIndex].speed.speed, progress) * Time.deltaTime;
+            transform.position = path.CurvePosition(from, to, progress);
+            transform.rotation = Quaternion.Slerp(from.rotationPoint.transform.rotation, to.rotationPoint.transform.rotation, progress);
 
-            Popcron.Gizmos.Sphere(transform.position, .01f, Color.green);
+            progress += Mathf.Lerp(from.speedPoint.speed, to.speedPoint.speed, progress) * Time.deltaTime / Vector3.Distance(from.transform.position, to.transform.position);
 
+            DrawPoint();
 
             if(interactable != null)
             {
-                if (interactable.IsHeld)
+                if (interactable.IsHeld || interactable.transform.parent != null)
                 {
-                    AnimLogger.Log("Object Was Held!");
+                    AnimLogger.Log("Object Is Held!");
                     interactable = null;
                     Destroy(gameObject);
                     return;
@@ -63,9 +62,18 @@ namespace H3VRAnimator
                     interactable.transform.rotation = transform.rotation;
                 }
             }
+        }
 
-            
+        public void DrawPoint()
+        {
+            if (!drawGizmos) return;
+            Popcron.Gizmos.Sphere(transform.position, .01f, Color.green);
+        }
 
+
+        public void DestroyAnimation()
+        {
+            Destroy(gameObject);
         }
 
     }

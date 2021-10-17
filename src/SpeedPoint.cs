@@ -14,7 +14,7 @@ namespace H3VRAnimator
         public float speed = 0.3f;
 
         private Text speedText;
-        private float speedMultiplier = 0.5f;
+        private float speedMultiplier = 1f;
 
         public override void Awake()
         {

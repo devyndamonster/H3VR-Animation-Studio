@@ -11,9 +11,10 @@ namespace H3VRAnimator
     public class MovablePoint : MonoBehaviour
     {
         public bool lockPostion;
+        public bool lockRotation;
         public Color pointColor = Color.red;
         public float radius = .01f;
-
+        public bool drawGizmos = true;
         public GameObject buttonPoint;
 
         protected FVRViveHand activeHand = null;
@@ -61,20 +62,7 @@ namespace H3VRAnimator
                 return;
             }
 
-
-            //If the hand is not set, we start following it
-            AnimLogger.Log("Hand was not active");
-            float distLeft = Vector3.Distance(GM.CurrentPlayerBody.LeftHand.position, transform.position);
-            float distRight = Vector3.Distance(GM.CurrentPlayerBody.RightHand.position, transform.position);
-
-            if(distLeft < distRight)
-            {
-                activeHand = GM.CurrentPlayerBody.LeftHand.GetComponent<FVRViveHand>();
-            }
-            else
-            {
-                activeHand = GM.CurrentPlayerBody.RightHand.GetComponent<FVRViveHand>();
-            }
+            activeHand = H3VRAnimator.GetPointingHand();
 
             savedDist = Vector3.Distance(activeHand.transform.position, transform.position);
         }
@@ -102,7 +90,11 @@ namespace H3VRAnimator
                     transform.position = activeHand.transform.position + activeHand.PointingTransform.forward * savedDist;
                 }
 
-                transform.rotation = activeHand.PointingTransform.rotation;
+                if (!lockRotation)
+                {
+                    transform.rotation = activeHand.PointingTransform.rotation;
+                }
+                
             }
 
             DrawPoint();
@@ -110,6 +102,7 @@ namespace H3VRAnimator
 
         public void DrawPoint()
         {
+            if (!drawGizmos) return;
             Popcron.Gizmos.Sphere(transform.position, radius, pointColor);
         }
 

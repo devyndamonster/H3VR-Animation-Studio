@@ -18,6 +18,7 @@ namespace H3VRAnimator
         {
             base.Update();
 
+            if (!drawGizmos) return;
             Popcron.Gizmos.Line(transform.position, transform.position + transform.forward * 0.03f, pointColor);
         }
     }
