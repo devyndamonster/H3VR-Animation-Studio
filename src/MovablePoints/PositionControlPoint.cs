@@ -5,9 +5,9 @@ using System.Text;
 
 namespace H3VRAnimator
 {
-    public class ControlPoint : MovablePoint
+    public class PositionControlPoint : MovablePoint
     {
-        public ControlPoint other;
+        public PositionControlPoint other;
 
 
         public override void Update()

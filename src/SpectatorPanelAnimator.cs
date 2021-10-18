@@ -16,7 +16,6 @@ namespace H3VRAnimator
 
         public Transform displayPoint = null;
         public AnimationPath path;
-        public List<AnimatedPoint> animations;
         public bool drawGizmos = true;
 
         public SpectatorPanel original;
@@ -26,7 +25,6 @@ namespace H3VRAnimator
             AnimLogger.Log("The Spectator Panel just started!");
             original = gameObject.GetComponent<SpectatorPanel>();
             path = new AnimationPath();
-            animations = new List<AnimatedPoint>();
 
             CreateDisplayPoint();
 
@@ -41,6 +39,12 @@ namespace H3VRAnimator
             AddTopButton("Toggle Gizmos", new Vector3(700, 900, 0), ToggleGizmos);
 
             AddTopButton("Toggle Bezier", new Vector3(700, 1000, 0), path.ToggleBezier);
+
+            AddTopButton("Toggle Continuous", new Vector3(700, 1100, 0), path.ToggleContinuous);
+
+            AddTopButton("Toggle Line Mode", new Vector3(700, 1200, 0), path.ToggleLineMode);
+
+            AddTopButton("Toggle Rotation", new Vector3(700, 1300, 0), path.ToggleDrawRotation);
         }
 
 
@@ -77,9 +81,8 @@ namespace H3VRAnimator
         private void AddAnimatedPoint(bool copyObject)
         {
             FVRViveHand otherHand = AnimationUtils.GetNonPointingHand();
-            FVRInteractiveObject interactable = otherHand.CurrentInteractable;
 
-            if(interactable is FVRPhysicalObject physObj)
+            if(otherHand.CurrentInteractable is FVRPhysicalObject physObj)
             {
                 AnimLogger.Log("Interactable was a physical object");
 
@@ -93,9 +96,10 @@ namespace H3VRAnimator
                         FVRPhysicalObject copy = Instantiate(physObj, path.points[0].transform.position, path.points[0].rotationPoint.transform.rotation);
 
                         copy.IsHeld = false;
-                        physObj.RootRigidbody.useGravity = false;
-                        physObj.RootRigidbody.velocity = Vector3.zero;
+                        copy.RootRigidbody.useGravity = false;
+                        copy.RootRigidbody.velocity = Vector3.zero;
 
+                        physObj = copy;
                     }
 
                     else
@@ -136,24 +140,13 @@ namespace H3VRAnimator
             point.interactable = physObj;
             point.drawGizmos = drawGizmos;
 
-            animations.Add(point);
+            path.animations.Add(point);
         }
 
 
         private void ClearPoints()
         {
             path.DestroyPath();
-
-            foreach (AnimatedPoint point in animations)
-            {
-                AnimLogger.Log("point: " + point);
-                AnimLogger.Log("gameobject: " + point.gameObject);
-                AnimLogger.Log("transform: " + point.transform);
-
-                Destroy(point.transform);
-            }
-
-            animations.Clear();
         }
 
 
@@ -161,22 +154,15 @@ namespace H3VRAnimator
         {
             drawGizmos = !drawGizmos;
             path.SetGizmosEnabled(drawGizmos);
-
-            foreach (AnimatedPoint point in animations)
-            {
-                point.drawGizmos = drawGizmos;
-            }
         }
 
 
-        public bool Update()
+        public void Update()
         {
             Popcron.Gizmos.Sphere(displayPoint.position, .01f, Color.blue);
 
-            if (!drawGizmos) return true;
+            path.Animate();
             path.DrawPath();
-
-            return true;
         }
 
 

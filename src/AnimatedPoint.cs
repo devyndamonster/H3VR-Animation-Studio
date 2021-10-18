@@ -17,26 +17,49 @@ namespace H3VRAnimator
         private int moveToIndex = 1;
         private float progress = 0;
 
-        public void Update()
+        public void Animate()
         {
+            
+            //If we have reached the end of the curve segment, decide where to move next
             if (progress >= 1)
             {
                 progress = 0;
                 moveToIndex += 1;
                 if (moveToIndex >= path.points.Count)
                 {
-                    moveToIndex = 1;
-                    transform.position = path.points[0].transform.position;
+                    if (path.isContinuous)
+                    {
+                        moveToIndex = 0;
+                    }
+
+                    else
+                    {
+                        moveToIndex = 1;
+                        transform.position = path.points[0].transform.position;
+                    }
                 }
             }
 
-            PathAnchor from = path.points[moveToIndex - 1];
-            PathAnchor to = path.points[moveToIndex];
+            //Set to and from based on our destination
+            PathAnchor from;
+            PathAnchor to;
 
-            transform.position = path.GetLerp(from, to, progress);
-            transform.rotation = Quaternion.Slerp(from.rotationPoint.transform.rotation, to.rotationPoint.transform.rotation, progress);
+            if (moveToIndex == 0)
+            {
+                from = path.points[path.points.Count - 1];
+                to = path.points[moveToIndex];
+            }
+            else
+            {
+                from = path.points[moveToIndex - 1];
+                to = path.points[moveToIndex];
+            }
+            
 
-            progress += Mathf.Lerp(from.speedPoint.speed, to.speedPoint.speed, progress) * Time.deltaTime / Vector3.Distance(from.transform.position, to.transform.position);
+            transform.position = path.GetLerpPosition(from, to, progress);
+            transform.rotation = path.GetLerpRotation(from, to, progress);
+
+            progress += Mathf.Lerp(from.speedPoint.speed, to.speedPoint.speed, progress) * Time.deltaTime / path.GetDistanceBetweenPoints(from, to);
 
             DrawPoint();
 
@@ -46,6 +69,7 @@ namespace H3VRAnimator
                 {
                     AnimLogger.Log("Object Is Held!");
                     interactable = null;
+                    path.animations.Remove(this);
                     Destroy(gameObject);
                     return;
                 }
@@ -71,11 +95,6 @@ namespace H3VRAnimator
             Popcron.Gizmos.Sphere(transform.position, .01f, Color.green);
         }
 
-
-        public void DestroyAnimation()
-        {
-            Destroy(gameObject);
-        }
 
     }
 }
