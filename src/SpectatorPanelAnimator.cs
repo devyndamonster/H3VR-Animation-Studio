@@ -15,16 +15,17 @@ namespace H3VRAnimator
     {
 
         public Transform displayPoint = null;
-        public AnimationPath path;
-        public bool drawGizmos = true;
-
+        public List<AnimationPath> paths = new List<AnimationPath>();
+        public List<GameObject> pathButtons = new List<GameObject>();
+        public int selectedPath = 0;
         public SpectatorPanel original;
+
+        private Vector3 pathButtonPos = new Vector3(-1500, 700, 0);
 
         public void Awake()
         {
             AnimLogger.Log("The Spectator Panel just started!");
             original = gameObject.GetComponent<SpectatorPanel>();
-            path = new AnimationPath();
 
             CreateDisplayPoint();
 
@@ -34,19 +35,24 @@ namespace H3VRAnimator
 
             AddTopButton("Animate Copy", new Vector3(-300, 1000, 0), () => { AddAnimatedPoint(true); });
 
+            AddTopButton("Toggle Pause", new Vector3(-300, 1100, 0), TogglePause);
+
             AddTopButton("Clear Points", new Vector3(200, 900, 0), ClearPoints);
 
             AddTopButton("Toggle Gizmos", new Vector3(700, 900, 0), ToggleGizmos);
 
-            AddTopButton("Toggle Bezier", new Vector3(700, 1000, 0), path.ToggleBezier);
+            AddTopButton("Toggle Bezier", new Vector3(700, 1000, 0), ToggleBezier);
 
-            AddTopButton("Toggle Continuous", new Vector3(700, 1100, 0), path.ToggleContinuous);
+            AddTopButton("Toggle Continuous", new Vector3(700, 1100, 0), ToggleContinuous);
 
-            AddTopButton("Toggle Line Mode", new Vector3(700, 1200, 0), path.ToggleLineMode);
+            AddTopButton("Toggle Line Mode", new Vector3(700, 1200, 0), ToggleLineMode);
 
-            AddTopButton("Toggle Rotation", new Vector3(700, 1300, 0), path.ToggleDrawRotation);
+            AddTopButton("Toggle Rotation", new Vector3(700, 1300, 0), ToggleDrawRotation);
+
+            AddTopButton("Add Path", new Vector3(-1500, 850, 0), AddPathButton);
+
+            AddPathButton();
         }
-
 
         private void AddTopButton(string text, Vector3 localPos, UnityAction buttonEvent)
         {
@@ -63,6 +69,41 @@ namespace H3VRAnimator
         }
 
 
+        private void AddPathButton()
+        {
+            //Instantiate the button object
+            GameObject buttonObject = Instantiate(original.List_Categories[0].gameObject, original.List_Categories[0].transform.parent);
+            buttonObject.transform.localPosition = pathButtonPos;
+            pathButtonPos += Vector3.down * 100;
+            buttonObject.transform.localScale = new Vector3(3, 3, 2);
+
+            //Setup the button event
+            Button buttonComp = buttonObject.gameObject.GetComponent<Button>();
+            buttonComp.onClick = new Button.ButtonClickedEvent();
+            int pathIndex = paths.Count;
+            buttonComp.onClick.AddListener(() => { SelectPath(pathIndex); });
+
+            //Track the new path
+            pathButtons.Add(buttonObject);
+            paths.Add(new AnimationPath());
+
+            Text textComp = buttonObject.gameObject.GetComponent<Text>();
+            textComp.text = "Path " + paths.Count;
+            if (paths.Count == 1) textComp.color = Color.white;
+            else textComp.color = Color.grey;
+        }
+
+
+
+        private void SelectPath(int i)
+        {
+            pathButtons[selectedPath].GetComponent<Text>().color = Color.grey;
+            pathButtons[i].GetComponent<Text>().color = Color.white;
+
+            selectedPath = i;
+        }
+
+
         private void CreateDisplayPoint()
         {
             GameObject drawPoint = new GameObject();
@@ -74,7 +115,7 @@ namespace H3VRAnimator
 
         private void AddPoint()
         {
-            path.AddPoint(displayPoint.transform.position);
+            paths[selectedPath].AddPoint(displayPoint.transform.position);
         }
 
 
@@ -89,24 +130,13 @@ namespace H3VRAnimator
                 //If we copy the object, we try to instantiate a new instance of the object
                 if (copyObject)
                 {
-                    //Only copy object if it is spawnable from the object dictionary
-                    //Note: we only do this to avoid copying unwanted things, like the camera. Maybe there is a more elegant solution?
-                    if (physObj.ObjectWrapper != null && IM.OD.ContainsKey(physObj.ObjectWrapper.ItemID))
-                    {
-                        FVRPhysicalObject copy = Instantiate(physObj, path.points[0].transform.position, path.points[0].rotationPoint.transform.rotation);
+                    FVRPhysicalObject copy = Instantiate(physObj, paths[selectedPath].points[0].transform.position, paths[selectedPath].points[0].rotationPoint.transform.rotation);
 
-                        copy.IsHeld = false;
-                        copy.RootRigidbody.useGravity = false;
-                        copy.RootRigidbody.velocity = Vector3.zero;
+                    copy.IsHeld = false;
+                    copy.RootRigidbody.useGravity = false;
+                    copy.RootRigidbody.velocity = Vector3.zero;
 
-                        physObj = copy;
-                    }
-
-                    else
-                    {
-                        AnimLogger.Log("Interactable was not duplicatable");
-                        return;
-                    }
+                    physObj = copy;
                 }
 
                 //If we are not meant to copy the object, then we just take the object from the players hand
@@ -120,9 +150,6 @@ namespace H3VRAnimator
 
                     physObj.RootRigidbody.useGravity = false;
                     physObj.RootRigidbody.velocity = Vector3.zero;
-
-                    physObj.transform.position = path.points[0].transform.position;
-                    physObj.transform.rotation = path.points[0].rotationPoint.transform.rotation;
                 }
             }
 
@@ -133,27 +160,46 @@ namespace H3VRAnimator
             }
 
 
-            GameObject animatedPoint = new GameObject("AnimatedPoint");
-            animatedPoint.transform.position = path.points[0].transform.position;
-            AnimatedPoint point = animatedPoint.AddComponent<AnimatedPoint>();
-            point.path = path;
-            point.interactable = physObj;
-            point.drawGizmos = drawGizmos;
+            AnimLogger.Log("Physical object selected!");
 
-            path.animations.Add(point);
+            paths[selectedPath].AddAnimatedPoint(physObj);
         }
 
 
         private void ClearPoints()
         {
-            path.DestroyPath();
+            paths[selectedPath].DestroyPath();
         }
 
 
         private void ToggleGizmos()
         {
-            drawGizmos = !drawGizmos;
-            path.SetGizmosEnabled(drawGizmos);
+            paths[selectedPath].ToggleGizmos();
+        }
+
+        private void ToggleBezier()
+        {
+            paths[selectedPath].ToggleBezier();
+        }
+
+        private void ToggleContinuous()
+        {
+            paths[selectedPath].ToggleContinuous();
+        }
+
+        private void ToggleLineMode()
+        {
+            paths[selectedPath].ToggleLineMode();
+        }
+
+        private void ToggleDrawRotation()
+        {
+            paths[selectedPath].ToggleDrawRotation();
+        }
+
+        private void TogglePause()
+        {
+            paths[selectedPath].TogglePause();
         }
 
 
@@ -161,8 +207,11 @@ namespace H3VRAnimator
         {
             Popcron.Gizmos.Sphere(displayPoint.position, .01f, Color.blue);
 
-            path.Animate();
-            path.DrawPath();
+            foreach(AnimationPath path in paths)
+            {
+                path.Animate();
+                path.DrawPath();
+            }
         }
 
 

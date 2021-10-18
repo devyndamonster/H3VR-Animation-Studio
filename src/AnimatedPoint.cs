@@ -13,6 +13,7 @@ namespace H3VRAnimator
         public AnimationPath path;
         public FVRPhysicalObject interactable;
         public bool drawGizmos = true;
+        public bool isPaused = false;
 
         private int moveToIndex = 1;
         private float progress = 0;
@@ -59,8 +60,12 @@ namespace H3VRAnimator
             transform.position = path.GetLerpPosition(from, to, progress);
             transform.rotation = path.GetLerpRotation(from, to, progress);
 
-            progress += Mathf.Lerp(from.speedPoint.speed, to.speedPoint.speed, progress) * Time.deltaTime / path.GetDistanceBetweenPoints(from, to);
-
+            //Only progress this animation if not paused
+            if (!isPaused)
+            {
+                progress += Mathf.Lerp(from.speedPoint.speed, to.speedPoint.speed, progress) * Time.deltaTime / path.GetDistanceBetweenPoints(from, to);
+            }
+            
             DrawPoint();
 
             if(interactable != null)

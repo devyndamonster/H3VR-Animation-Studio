@@ -1,4 +1,5 @@
 ﻿using FistVR;
+using H3VRAnimator.Logging;
 using H3VRAnimator.Utilities;
 using System;
 using System.Collections.Generic;
@@ -13,6 +14,7 @@ namespace H3VRAnimator
     {
         public List<PathAnchor> points = new List<PathAnchor>();
         public List<AnimatedPoint> animations = new List<AnimatedPoint>();
+        public bool isPaused = false;
         public bool isBezier = true;
         public bool isContinuous = false;
         public bool onlyDrawPoints = false;
@@ -48,6 +50,25 @@ namespace H3VRAnimator
 
             //Set bezier curve points visibility
             UpdateControlPoints();
+        }
+
+
+        public void AddAnimatedPoint(FVRPhysicalObject physObj)
+        {
+            AnimLogger.Log("Inside path");
+
+            GameObject animatedPoint = new GameObject("AnimatedPoint");
+            animatedPoint.transform.position = points[0].transform.position;
+            AnimatedPoint point = animatedPoint.AddComponent<AnimatedPoint>();
+            point.path = this;
+            point.isPaused = isPaused;
+            point.interactable = physObj;
+            point.drawGizmos = drawGizmos;
+
+            animations.Add(point);
+
+            physObj.transform.position = points[0].transform.position;
+            physObj.transform.rotation = points[0].rotationPoint.transform.rotation;
         }
 
 
@@ -183,8 +204,8 @@ namespace H3VRAnimator
             if (isBezier)
             {
                 //Approximate curve length
-                float controlPointDist = Vector3.Distance(from.transform.position, from.forwardPoint.transform.position) + Vector3.Distance(from.forwardPoint.transform.position, to.backPoint.transform.position) + Vector3.Distance(to.backPoint.transform.position, to.transform.position);
-                return Vector3.Distance(from.transform.position, to.transform.position) + controlPointDist / 2;
+                Vector3 midPos = GetLerpPosition(from, to, 0.5f);
+                return Vector3.Distance(from.transform.position, midPos) + Vector3.Distance(to.transform.position, midPos);
             }
             else
             {
@@ -209,6 +230,16 @@ namespace H3VRAnimator
             animations.Clear();
         }
 
+        public void TogglePause()
+        {
+            isPaused = !isPaused;
+
+            foreach(AnimatedPoint point in animations)
+            {
+                AnimLogger.Log("Setting pause for point: " + isPaused);
+                point.isPaused = isPaused;
+            }
+        }
 
 
         public void ToggleBezier()
@@ -253,19 +284,19 @@ namespace H3VRAnimator
         }
 
 
-        public void SetGizmosEnabled(bool enabled)
+        public void ToggleGizmos()
         {
-            drawGizmos = enabled;
+            drawGizmos = !drawGizmos;
 
             for(int i = 0; i < points.Count; i++)
             {
-                points[i].drawGizmos = enabled;
-                points[i].rotationPoint.drawGizmos = enabled;
-                points[i].speedPoint.drawGizmos = enabled;
+                points[i].drawGizmos = drawGizmos;
+                points[i].rotationPoint.drawGizmos = drawGizmos;
+                points[i].speedPoint.drawGizmos = drawGizmos;
 
-                points[i].buttonPoint.gameObject.SetActive(enabled);
-                points[i].rotationPoint.buttonPoint.gameObject.SetActive(enabled);
-                points[i].speedPoint.buttonPoint.gameObject.SetActive(enabled);
+                points[i].buttonPoint.gameObject.SetActive(drawGizmos);
+                points[i].rotationPoint.buttonPoint.gameObject.SetActive(drawGizmos);
+                points[i].speedPoint.buttonPoint.gameObject.SetActive(drawGizmos);
 
                 //Control points have special cases for if they're on the end or not
                 UpdateControlPoints();
@@ -274,7 +305,7 @@ namespace H3VRAnimator
 
             foreach (AnimatedPoint point in animations)
             {
-                point.drawGizmos = enabled;
+                point.drawGizmos = drawGizmos;
             }
         }
     }
