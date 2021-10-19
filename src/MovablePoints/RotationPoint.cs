@@ -10,7 +10,7 @@ namespace H3VRAnimator
     {
         public override void Awake()
         {
-            lockPostion = true;
+            lockPosition = true;
             base.Awake();
         }
 

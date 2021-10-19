@@ -55,6 +55,9 @@ namespace H3VRAnimator
                 from = path.points[moveToIndex - 1];
                 to = path.points[moveToIndex];
             }
+
+            //If we just went through a jump point, immediately move to next point
+            if (from.isJumpPoint) progress = 1;
             
 
             transform.position = path.GetLerpPosition(from, to, progress);

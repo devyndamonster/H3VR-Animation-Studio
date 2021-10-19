@@ -10,82 +10,17 @@ using UnityEngine.UI;
 
 namespace H3VRAnimator
 {
-    public class MovablePoint : MonoBehaviour
+    public class MovablePoint : ClickablePoint
     {
-        public bool lockPostion;
-        public bool lockRotation;
-        public Color pointColor = Color.red;
-        public float radius = .01f;
-        public bool drawGizmos = true;
-        public GameObject buttonPoint;
-
-        protected FVRViveHand activeHand = null;
-        protected float savedDist;
-        
-        public virtual void Awake()
-        {
-            gameObject.layer = LayerMask.NameToLayer("Interactable");
-
-            Canvas canvasComp = gameObject.AddComponent<Canvas>();
-            RectTransform rect = canvasComp.GetComponent<RectTransform>();
-            canvasComp.renderMode = RenderMode.WorldSpace;
-            rect.sizeDelta = new Vector2(1, 1);
-
-            buttonPoint = new GameObject();
-            buttonPoint.transform.SetParent(transform);
-            buttonPoint.transform.localPosition = Vector3.zero;
-            buttonPoint.transform.rotation = transform.rotation;
-            buttonPoint.transform.localScale = new Vector3(0.0005f, 0.0005f, 0.0005f);
-
-            BoxCollider collider = buttonPoint.AddComponent<BoxCollider>();
-            collider.size = new Vector3(50, 50, 50);
-            collider.isTrigger = true;
-
-            Button button = buttonPoint.AddComponent<Button>();
-            button.onClick.AddListener(ButtonPressed);
-
-            FVRPointableButton fvrButton = buttonPoint.AddComponent<FVRPointableButton>();
-            fvrButton.useGUILayout = true;
-            fvrButton.ColorSelected = Color.blue;
-            fvrButton.ColorUnselected = Color.cyan;
-            fvrButton.MaxPointingRange = 2;
-            fvrButton.Button = button;
-        }
-
-        public virtual void ButtonPressed()
-        {
-            AnimLogger.Log("Button pressed!");
-
-            //If the hand is already set, then we unfollow the hand
-            if(activeHand != null)
-            {
-                AnimLogger.Log("Hand was active");
-                return;
-            }
-
-            activeHand = AnimationUtils.GetPointingHand();
-            savedDist = Vector3.Distance(activeHand.transform.position, transform.position);
-        }
+        public bool lockPosition = false;
+        public bool lockRotation = false;
 
 
-        public virtual void ButtonReleased()
-        {
-            AnimLogger.Log("Trigger Released!");
-            activeHand = null;
-        }
-
-
-        public virtual void Update()
+        public override void Update()
         {
             if(activeHand != null)
             {
-                if (activeHand.Input.TriggerFloat < 0.2f)
-                {
-                    ButtonReleased();
-                    return;
-                }
-
-                if (!lockPostion)
+                if (!lockPosition)
                 {
                     transform.position = activeHand.transform.position + activeHand.PointingTransform.forward * savedDist;
                 }
@@ -94,17 +29,11 @@ namespace H3VRAnimator
                 {
                     transform.rotation = activeHand.PointingTransform.rotation;
                 }
-                
             }
 
-            DrawGizmos();
+            base.Update();
         }
 
-        public virtual void DrawGizmos()
-        {
-            if (!drawGizmos) return;
-            Popcron.Gizmos.Sphere(transform.position, radius, pointColor);
-        }
 
     }
 }

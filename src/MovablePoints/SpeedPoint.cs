@@ -16,10 +16,9 @@ namespace H3VRAnimator
         private float speedMultiplier = 1f;
 
 
-
         public override void Awake()
         {
-            lockPostion = true;
+            lockPosition = true;
             base.Awake();
 
             speedText = buttonPoint.AddComponent<Text>();
@@ -38,7 +37,6 @@ namespace H3VRAnimator
         }
 
 
-
         public override void Update()
         {
             base.Update();
@@ -48,8 +46,13 @@ namespace H3VRAnimator
                 speedText.text = Mathf.Max(speed + GetSpeedChange(), 0).ToString("0.00");
             }
 
-            transform.rotation = Quaternion.LookRotation(transform.position - GM.CurrentPlayerBody.Head.position);
+            if (drawGizmos)
+            {
+                transform.rotation = Quaternion.LookRotation(transform.position - GM.CurrentPlayerBody.Head.position);
+            }
+            
         }
+
 
         public float GetSpeedChange()
         {

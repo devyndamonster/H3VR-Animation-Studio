@@ -45,6 +45,7 @@ namespace H3VRAnimator
             }
 
             PathAnchor anchorComp = anchorObject.AddComponent<PathAnchor>();
+            anchorComp.path = this;
             points.Add(anchorComp);
 
 
@@ -85,7 +86,15 @@ namespace H3VRAnimator
                     PathAnchor from = points[i - 1];
                     PathAnchor to = points[i];
 
-                    DrawBezierCurve(from, to);
+                    if (from.isJumpPoint)
+                    {
+                        Popcron.Gizmos.Line(from.transform.position, to.transform.position, Color.grey);
+                    }
+                    else
+                    {
+                        DrawBezierCurve(from, to);
+                    }
+
                     if(drawRotation)DrawRotation(from, to);
                 }
 
@@ -95,7 +104,15 @@ namespace H3VRAnimator
                     PathAnchor from = points[points.Count - 1];
                     PathAnchor to = points[0];
 
-                    DrawBezierCurve(from, to);
+                    if (from.isJumpPoint)
+                    {
+                        Popcron.Gizmos.Line(from.transform.position, to.transform.position, Color.grey);
+                    }
+                    else
+                    {
+                        DrawBezierCurve(from, to);
+                    }
+
                     if (drawRotation) DrawRotation(from, to);
                 }
             }
@@ -104,12 +121,36 @@ namespace H3VRAnimator
             {
                 for (int i = 1; i < points.Count; i++)
                 {
-                    Popcron.Gizmos.Line(points[i - 1].transform.position, points[i].transform.position, Color.red);
+                    PathAnchor from = points[i - 1];
+                    PathAnchor to = points[i];
+
+                    if (from.isJumpPoint)
+                    {
+                        Popcron.Gizmos.Line(from.transform.position, to.transform.position, Color.grey);
+                    }
+                    else
+                    {
+                        Popcron.Gizmos.Line(from.transform.position, to.transform.position, Color.red);
+                    }
+
+                    if (drawRotation) DrawRotation(from, to);
                 }
 
                 if (isContinuous)
                 {
-                    Popcron.Gizmos.Line(points[points.Count - 1].transform.position, points[0].transform.position, Color.red);
+                    PathAnchor from = points[points.Count - 1];
+                    PathAnchor to = points[0];
+
+                    if (from.isJumpPoint)
+                    {
+                        Popcron.Gizmos.Line(from.transform.position, to.transform.position, Color.grey);
+                    }
+                    else
+                    {
+                        Popcron.Gizmos.Line(from.transform.position, to.transform.position, Color.red);
+                    }
+
+                    if (drawRotation) DrawRotation(from, to);
                 }
             }
         }
@@ -214,6 +255,39 @@ namespace H3VRAnimator
         }
 
 
+        public void DeletePoint(PathAnchor point)
+        {
+            points.Remove(point);
+            GameObject.Destroy(point.gameObject);
+            UpdateControlPoints();
+        }
+
+
+        public void InsertPointAfter(PathAnchor point)
+        {
+            int index = points.IndexOf(point);
+
+            Vector3 newPos = point.transform.position + Vector3.forward * 0.1f;
+            if(index < points.Count - 1)
+            {
+                newPos = GetLerpPosition(points[index], points[index + 1], 0.5f);
+            }
+            else if (isContinuous && points.Count > 1)
+            {
+                newPos = GetLerpPosition(points[index], points[0], 0.5f);
+            }
+
+            GameObject anchorObject = new GameObject("MovablePoint");
+            anchorObject.transform.position = newPos;
+            anchorObject.transform.SetParent(point.transform.parent);
+            PathAnchor anchorComp = anchorObject.AddComponent<PathAnchor>();
+            anchorComp.path = this;
+
+            points.Insert(index + 1, anchorComp);
+            UpdateControlPoints();
+        }
+
+
         public void DestroyPath()
         {
             foreach(PathAnchor point in points)
@@ -293,14 +367,15 @@ namespace H3VRAnimator
                 points[i].drawGizmos = drawGizmos;
                 points[i].rotationPoint.drawGizmos = drawGizmos;
                 points[i].speedPoint.drawGizmos = drawGizmos;
+                points[i].optionPoint.drawGizmos = drawGizmos;
 
                 points[i].buttonPoint.gameObject.SetActive(drawGizmos);
                 points[i].rotationPoint.buttonPoint.gameObject.SetActive(drawGizmos);
                 points[i].speedPoint.buttonPoint.gameObject.SetActive(drawGizmos);
-
-                //Control points have special cases for if they're on the end or not
-                UpdateControlPoints();
+                points[i].optionPoint.gameObject.SetActive(drawGizmos);
             }
+
+            UpdateControlPoints();
 
 
             foreach (AnimatedPoint point in animations)
