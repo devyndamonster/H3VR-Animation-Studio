@@ -18,7 +18,15 @@ namespace H3VRAnimator
 
         public override void Update()
         {
-            if(activeHand != null)
+            CheckForMove();
+
+            base.Update();
+        }
+
+
+        public void CheckForMove()
+        {
+            if (activeHand != null)
             {
                 if (!lockPosition)
                 {
@@ -30,8 +38,6 @@ namespace H3VRAnimator
                     transform.rotation = activeHand.PointingTransform.rotation;
                 }
             }
-
-            base.Update();
         }
 
 

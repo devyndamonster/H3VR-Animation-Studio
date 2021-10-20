@@ -18,8 +18,8 @@ namespace H3VRAnimator
         public bool drawGizmos = true;
         public bool drawInteractionSphere = true;
         public GameObject buttonPoint;
+        public FVRViveHand activeHand = null;
 
-        protected FVRViveHand activeHand = null;
         protected float savedDist;
 
 
@@ -56,15 +56,21 @@ namespace H3VRAnimator
 
         public virtual void Update()
         {
-            if(activeHand != null)
+            CheckForRelease();
+
+            DrawGizmos();
+        }
+
+
+        public void CheckForRelease()
+        {
+            if (activeHand != null)
             {
                 if (activeHand.Input.TriggerFloat < 0.2f)
                 {
                     ButtonReleased();
                 }
             }
-
-            DrawGizmos();
         }
 
 

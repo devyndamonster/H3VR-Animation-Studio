@@ -179,6 +179,29 @@ namespace H3VRAnimator
             jumpPoint.optionText.text = "Toggle Jump";
             jumpPoint.clickEvent = ToggleJump;
             optionList.Add(jumpPoint);
+
+            GameObject addEvent = new GameObject("AddEvent");
+            addEvent.transform.SetParent(transform);
+            addEvent.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 2);
+            OptionPoint eventPoint = addEvent.AddComponent<OptionPoint>();
+            eventPoint.optionText.text = "Add Event";
+            eventPoint.clickEvent = () => { AddPathSlidePointAfter(eventPoint); };
+            optionList.Add(eventPoint);
+        }
+
+
+        private void AddPathSlidePointAfter(OptionPoint pressed)
+        {
+            GameObject slide = new GameObject("SlidingPoint");
+            slide.transform.SetParent(transform);
+            slide.transform.position = transform.position;
+            PathSlidingPoint slidePoint = slide.AddComponent<PathSlidingPoint>();
+            slidePoint.pointColor = new Color(((float)217) / 255, ((float)0) / 255, ((float)255) / 255, 1);
+            slidePoint.radius = .005f;
+            slidePoint.path = path;
+            slidePoint.from = this;
+            slidePoint.to = path.GetNextPoint(this);
+            slidePoint.activeHand = pressed.activeHand;
         }
 
 
@@ -198,6 +221,35 @@ namespace H3VRAnimator
         private void ToggleJump()
         {
             isJumpPoint = !isJumpPoint;
+        }
+
+
+        public void SetGizmosEnabled(bool enabled)
+        {
+            drawGizmos = enabled;
+
+            rotationPoint.drawGizmos = drawGizmos;
+            speedPoint.drawGizmos = drawGizmos;
+            optionPoint.drawGizmos = drawGizmos;
+            forwardPoint.drawGizmos = drawGizmos;
+            backPoint.drawGizmos = drawGizmos;
+            forwardRotationPoint.drawGizmos = drawGizmos;
+            backRotationPoint.drawGizmos = drawGizmos;
+
+            buttonPoint.gameObject.SetActive(drawGizmos);
+            rotationPoint.buttonPoint.gameObject.SetActive(drawGizmos);
+            speedPoint.buttonPoint.gameObject.SetActive(drawGizmos);
+            optionPoint.gameObject.SetActive(drawGizmos);
+            forwardPoint.buttonPoint.gameObject.SetActive(drawGizmos);
+            backPoint.buttonPoint.gameObject.SetActive(drawGizmos);
+            forwardRotationPoint.buttonPoint.gameObject.SetActive(drawGizmos);
+            backRotationPoint.buttonPoint.gameObject.SetActive(drawGizmos);
+
+            foreach(OptionPoint point in optionList)
+            {
+                point.drawGizmos = drawGizmos;
+                point.buttonPoint.gameObject.SetActive(drawGizmos);
+            }
         }
 
 

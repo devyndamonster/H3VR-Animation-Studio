@@ -1,0 +1,81 @@
+﻿using H3VRAnimator.Logging;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using UnityEngine;
+
+namespace H3VRAnimator
+{
+    public class PathSlidingPoint : MovablePoint
+    {
+
+        public AnimationPath path;
+        public PathAnchor from;
+        public PathAnchor to;
+        public float position;
+
+
+        public override void Update()
+        {
+            CheckForRelease();
+            CheckForMove();
+
+            if (activeHand != null) UpdatePosition();
+
+            transform.position = path.GetLerpPosition(from, to, position);
+
+            DrawGizmos();
+        }
+
+
+        private void UpdatePosition()
+        {
+            position = path.GetClosestPoint(from, to, transform.position);
+
+            //If far from start, switch points forward
+            if (position >= 1)
+            {
+                PathAnchor next = path.GetNextPoint(to);
+
+                //Only switch points if the point actually changed
+                if (!next.Equals(to))
+                {
+                    from = to;
+                    to = next;
+                    position = 0;
+
+                    AnimLogger.Log("Move Points Forward");
+                }
+
+                else
+                {
+                    AnimLogger.Log("Could Not Move Forward");
+                }
+            }
+
+
+            //If far from end, switch points backwards
+            else if (position <= 0)
+            {
+                PathAnchor prev = path.GetPrevPoint(from);
+
+                //Only switch points if the point actually changed
+                if (!prev.Equals(from))
+                {
+                    to = from;
+                    from = prev;
+                    position = 1;
+                }
+
+                else
+                {
+                    AnimLogger.Log("Could Not Move Backward");
+                }
+            }
+        }
+
+
+
+    }
+}
