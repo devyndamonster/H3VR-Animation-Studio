@@ -38,15 +38,6 @@ namespace H3VRAnimator
 
 
 
-        public void Animate()
-        {
-            foreach (AnimatedPoint point in animations)
-            {
-                point.Animate();
-            }
-        }
-
-
         public void AddPoint(Vector3 position)
         {
             GameObject anchorObject = new GameObject("MovablePoint");
@@ -70,12 +61,15 @@ namespace H3VRAnimator
 
         public void AddAnimatedPoint(FVRPhysicalObject physObj)
         {
-            AnimLogger.Log("Inside path");
-
             GameObject animatedPoint = new GameObject("AnimatedPoint");
             animatedPoint.transform.position = points[0].transform.position;
             AnimatedPoint point = animatedPoint.AddComponent<AnimatedPoint>();
             point.path = this;
+            point.from = points[0];
+            point.to = GetNextPoint(point.from);
+            point.offset = new Vector3(0, -0.1f, 0);
+            point.pointColor = Color.green;
+            point.radius = .005f;
             point.isPaused = isPaused;
             point.interactable = physObj;
             point.drawGizmos = drawGizmos;
@@ -343,9 +337,7 @@ namespace H3VRAnimator
 
         public float GetClosestPoint(PathAnchor from, PathAnchor to, Vector3 position)
         {
-            Popcron.Gizmos.Sphere(position, .005f, Color.green);
-
-
+            
             //First, we go through the bezier and get all the points
             int firstIndex = 0;
             float firstDist = float.MaxValue;
@@ -363,7 +355,7 @@ namespace H3VRAnimator
                 //Also track the closest point
                 if (dist < firstDist)
                 {
-                    AnimLogger.Log($"It was closer than the first distance at {firstIndex}, New Distance ({dist}) < First Distance ({cachedCurveData[firstIndex].distance})");
+                    AnimLogger.Log($"It was closer than the first distance at {firstIndex}, New Distance ({dist}) < First Distance ({firstDist})");
                     firstIndex = i;
                     firstDist = dist;
                 }
@@ -393,8 +385,8 @@ namespace H3VRAnimator
             }
             
 
-            Popcron.Gizmos.Sphere(cachedCurveData[firstIndex].position, .004f, Color.white);
-            Popcron.Gizmos.Sphere(cachedCurveData[secondIndex].position, .004f, Color.black);
+            //Popcron.Gizmos.Sphere(cachedCurveData[firstIndex].position, .004f, Color.white);
+            //Popcron.Gizmos.Sphere(cachedCurveData[secondIndex].position, .004f, Color.black);
 
 
             //Now that we have two closest points, project given position between closes points
@@ -404,7 +396,7 @@ namespace H3VRAnimator
             Vector3 lhs = position - cachedCurveData[firstIndex].position;
             float dotP = Vector3.Dot(lhs, heading);
             Vector3 projectedPosition = cachedCurveData[firstIndex].position + heading * dotP;
-            Popcron.Gizmos.Sphere(projectedPosition, .003f, Color.blue);
+            //Popcron.Gizmos.Sphere(projectedPosition, .003f, Color.blue);
 
 
             //Update the distances to now use projected position
@@ -414,27 +406,28 @@ namespace H3VRAnimator
 
             //If this projected position is too far from second closest, we must be past the end point
             float distBetween = Vector3.Distance(cachedCurveData[firstIndex].position, cachedCurveData[secondIndex].position);
-            if (Vector3.Distance(projectedPosition, cachedCurveData[secondIndex].position) > distBetween) {
+            if (cachedCurveData[secondIndex].distance > distBetween) {
 
-                AnimLogger.Log($"Leaving Curve! Distance Between ({distBetween}) < Proj Dist from Second ({Vector3.Distance(projectedPosition, cachedCurveData[secondIndex].position)})");
+                //AnimLogger.Log($"Leaving Curve! Distance Between ({distBetween}) < Proj Dist from Second ({Vector3.Distance(projectedPosition, cachedCurveData[secondIndex].position)})");
 
                 //If adjacent to start, return 0
                 if (firstIndex == 0 || secondIndex == 0)
                 {
-                    AnimLogger.Log($"Adjacent to start, First Index ({firstIndex}), Second Index ({secondIndex})");
+                    //AnimLogger.Log($"Adjacent to start, First Index ({firstIndex}), Second Index ({secondIndex})");
                     return 0;
                 }
 
                 //If adjacent to end, return 1
                 else if(firstIndex == bezierMidPoints || secondIndex == bezierMidPoints)
                 {
-                    AnimLogger.Log($"Adjacent to end, First Index ({firstIndex}), Second Index ({secondIndex})");
+                    //AnimLogger.Log($"Adjacent to end, First Index ({firstIndex}), Second Index ({secondIndex})");
                     return 1;
                 }
 
                 else
                 {
-                    AnimLogger.Log($"Somehow our projected distance was too far from the second closest?");
+                    AnimLogger.Log($"Somehow our projected distance was too far from the second closest? First index ({firstIndex}), Second Index ({secondIndex})");
+                    AnimLogger.Log($"Distance First ({cachedCurveData[firstIndex].distance}), Distance Second ({cachedCurveData[secondIndex].distance})");
                 }
             }
 
@@ -542,6 +535,7 @@ namespace H3VRAnimator
             foreach (AnimatedPoint point in animations)
             {
                 point.drawGizmos = drawGizmos;
+                point.buttonPoint.SetActive(drawGizmos);
             }
         }
     }

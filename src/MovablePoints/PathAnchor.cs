@@ -180,6 +180,7 @@ namespace H3VRAnimator
             jumpPoint.clickEvent = ToggleJump;
             optionList.Add(jumpPoint);
 
+            /*
             GameObject addEvent = new GameObject("AddEvent");
             addEvent.transform.SetParent(transform);
             addEvent.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 2);
@@ -187,6 +188,7 @@ namespace H3VRAnimator
             eventPoint.optionText.text = "Add Event";
             eventPoint.clickEvent = () => { AddPathSlidePointAfter(eventPoint); };
             optionList.Add(eventPoint);
+            */
         }
 
 
@@ -201,7 +203,8 @@ namespace H3VRAnimator
             slidePoint.path = path;
             slidePoint.from = this;
             slidePoint.to = path.GetNextPoint(this);
-            slidePoint.activeHand = pressed.activeHand;
+            slidePoint.position = 0.5f;
+            slidePoint.offset = new Vector3(0, -0.2f, 0);
         }
 
 

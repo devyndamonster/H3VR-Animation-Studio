@@ -209,7 +209,6 @@ namespace H3VRAnimator
 
             foreach(AnimationPath path in paths)
             {
-                path.Animate();
                 path.DrawPath();
             }
         }

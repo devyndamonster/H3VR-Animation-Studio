@@ -14,6 +14,7 @@ namespace H3VRAnimator
         public PathAnchor from;
         public PathAnchor to;
         public float position;
+        public Vector3 offset = Vector3.zero;
 
 
         public override void Update()
@@ -21,16 +22,21 @@ namespace H3VRAnimator
             CheckForRelease();
             CheckForMove();
 
-            if (activeHand != null) UpdatePosition();
-
-            transform.position = path.GetLerpPosition(from, to, position);
+            if (activeHand != null)
+            {
+                UpdatePosition();
+                Popcron.Gizmos.Sphere(transform.position, .005f, Color.grey);
+            }
+                
+            transform.position = path.GetLerpPosition(from, to, position) + offset;
 
             DrawGizmos();
         }
 
 
-        private void UpdatePosition()
+        protected void UpdatePosition()
         {
+
             position = path.GetClosestPoint(from, to, transform.position);
 
             //If far from start, switch points forward
