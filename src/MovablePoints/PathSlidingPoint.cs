@@ -51,12 +51,12 @@ namespace H3VRAnimator
                     to = next;
                     position = 0;
 
-                    AnimLogger.Log("Move Points Forward");
+                    //AnimLogger.Log("Move Points Forward");
                 }
 
                 else
                 {
-                    AnimLogger.Log("Could Not Move Forward");
+                    //AnimLogger.Log("Could Not Move Forward");
                 }
             }
 
@@ -76,7 +76,7 @@ namespace H3VRAnimator
 
                 else
                 {
-                    AnimLogger.Log("Could Not Move Backward");
+                    //AnimLogger.Log("Could Not Move Backward");
                 }
             }
         }

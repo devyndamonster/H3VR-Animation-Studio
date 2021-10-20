@@ -347,7 +347,7 @@ namespace H3VRAnimator
                 Vector3 mid = GetLerpPosition(from, to, t);
                 float dist = Vector3.Distance(mid, position);
 
-                AnimLogger.Log($"Evaluating mid point {i}, with Dist = {dist}");
+                //AnimLogger.Log($"Evaluating mid point {i}, with Dist = {dist}");
                 cachedCurveData[i].position = mid;
                 cachedCurveData[i].distance = dist;
                 cachedCurveData[i].t = t;
@@ -355,7 +355,7 @@ namespace H3VRAnimator
                 //Also track the closest point
                 if (dist < firstDist)
                 {
-                    AnimLogger.Log($"It was closer than the first distance at {firstIndex}, New Distance ({dist}) < First Distance ({firstDist})");
+                    //AnimLogger.Log($"It was closer than the first distance at {firstIndex}, New Distance ({dist}) < First Distance ({firstDist})");
                     firstIndex = i;
                     firstDist = dist;
                 }
@@ -426,8 +426,8 @@ namespace H3VRAnimator
 
                 else
                 {
-                    AnimLogger.Log($"Somehow our projected distance was too far from the second closest? First index ({firstIndex}), Second Index ({secondIndex})");
-                    AnimLogger.Log($"Distance First ({cachedCurveData[firstIndex].distance}), Distance Second ({cachedCurveData[secondIndex].distance})");
+                    //AnimLogger.Log($"Somehow our projected distance was too far from the second closest? First index ({firstIndex}), Second Index ({secondIndex})");
+                    //AnimLogger.Log($"Distance First ({cachedCurveData[firstIndex].distance}), Distance Second ({cachedCurveData[secondIndex].distance})");
                 }
             }
 
