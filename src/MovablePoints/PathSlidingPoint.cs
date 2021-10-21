@@ -36,9 +36,13 @@ namespace H3VRAnimator
 
         protected void UpdatePosition()
         {
-
             position = path.GetClosestPoint(from, to, transform.position);
+            UpdateEndpoints();
+        }
 
+
+        protected virtual void UpdateEndpoints()
+        {
             //If far from start, switch points forward
             if (position >= 1)
             {
@@ -47,10 +51,8 @@ namespace H3VRAnimator
                 //Only switch points if the point actually changed
                 if (!next.Equals(to))
                 {
-                    from = to;
-                    to = next;
-                    position = 0;
 
+                    ShiftEndpointsForwards(next);
                     //AnimLogger.Log("Move Points Forward");
                 }
 
@@ -69,9 +71,7 @@ namespace H3VRAnimator
                 //Only switch points if the point actually changed
                 if (!prev.Equals(from))
                 {
-                    to = from;
-                    from = prev;
-                    position = 1;
+                    ShiftEndpointsBackwards(prev);
                 }
 
                 else
@@ -82,6 +82,20 @@ namespace H3VRAnimator
         }
 
 
+        protected virtual void ShiftEndpointsForwards(PathAnchor next)
+        {
+            from = to;
+            to = next;
+            position = 0;
+        }
+
+
+        protected virtual void ShiftEndpointsBackwards(PathAnchor prev)
+        {
+            to = from;
+            from = prev;
+            position = 1;
+        }
 
     }
 }

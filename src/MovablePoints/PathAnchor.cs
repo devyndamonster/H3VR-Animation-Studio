@@ -23,6 +23,8 @@ namespace H3VRAnimator
         public OptionPoint optionPoint;
         public List<OptionPoint> optionList = new List<OptionPoint>();
 
+        public List<EventPoint> eventsList = new List<EventPoint>();
+
         public bool isJumpPoint = false;
 
         private bool isOptionExpanded = false;
@@ -180,31 +182,15 @@ namespace H3VRAnimator
             jumpPoint.clickEvent = ToggleJump;
             optionList.Add(jumpPoint);
 
-            /*
+            
             GameObject addEvent = new GameObject("AddEvent");
             addEvent.transform.SetParent(transform);
             addEvent.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 2);
             OptionPoint eventPoint = addEvent.AddComponent<OptionPoint>();
             eventPoint.optionText.text = "Add Event";
-            eventPoint.clickEvent = () => { AddPathSlidePointAfter(eventPoint); };
+            eventPoint.clickEvent = AddPathSlidePointAfter;
             optionList.Add(eventPoint);
-            */
-        }
-
-
-        private void AddPathSlidePointAfter(OptionPoint pressed)
-        {
-            GameObject slide = new GameObject("SlidingPoint");
-            slide.transform.SetParent(transform);
-            slide.transform.position = transform.position;
-            PathSlidingPoint slidePoint = slide.AddComponent<PathSlidingPoint>();
-            slidePoint.pointColor = new Color(((float)217) / 255, ((float)0) / 255, ((float)255) / 255, 1);
-            slidePoint.radius = .005f;
-            slidePoint.path = path;
-            slidePoint.from = this;
-            slidePoint.to = path.GetNextPoint(this);
-            slidePoint.position = 0.5f;
-            slidePoint.offset = new Vector3(0, -0.2f, 0);
+            
         }
 
 
@@ -218,6 +204,22 @@ namespace H3VRAnimator
             }
 
             optionList.Clear();
+        }
+
+
+        private void AddPathSlidePointAfter()
+        {
+            GameObject slide = new GameObject("SlidingPoint");
+            slide.transform.position = transform.position;
+            EventPoint slidePoint = slide.AddComponent<EventPoint>();
+            slidePoint.pointColor = new Color(((float)217) / 255, ((float)0) / 255, ((float)255) / 255, 1);
+            slidePoint.radius = .005f;
+            slidePoint.path = path;
+            slidePoint.from = this;
+            slidePoint.to = path.GetNextPoint(this);
+            slidePoint.position = 0.5f;
+
+            eventsList.Add(slidePoint);
         }
 
 
@@ -239,19 +241,24 @@ namespace H3VRAnimator
             forwardRotationPoint.drawGizmos = drawGizmos;
             backRotationPoint.drawGizmos = drawGizmos;
 
-            buttonPoint.gameObject.SetActive(drawGizmos);
-            rotationPoint.buttonPoint.gameObject.SetActive(drawGizmos);
-            speedPoint.buttonPoint.gameObject.SetActive(drawGizmos);
+            buttonPoint.SetActive(drawGizmos);
+            rotationPoint.buttonPoint.SetActive(drawGizmos);
+            speedPoint.buttonPoint.SetActive(drawGizmos);
             optionPoint.gameObject.SetActive(drawGizmos);
-            forwardPoint.buttonPoint.gameObject.SetActive(drawGizmos);
-            backPoint.buttonPoint.gameObject.SetActive(drawGizmos);
-            forwardRotationPoint.buttonPoint.gameObject.SetActive(drawGizmos);
-            backRotationPoint.buttonPoint.gameObject.SetActive(drawGizmos);
+            forwardPoint.buttonPoint.SetActive(drawGizmos);
+            backPoint.buttonPoint.SetActive(drawGizmos);
+            forwardRotationPoint.buttonPoint.SetActive(drawGizmos);
+            backRotationPoint.buttonPoint.SetActive(drawGizmos);
 
             foreach(OptionPoint point in optionList)
             {
                 point.drawGizmos = drawGizmos;
                 point.buttonPoint.gameObject.SetActive(drawGizmos);
+            }
+
+            foreach(EventPoint point in eventsList)
+            {
+                point.SetGizmosEnabled(enabled);
             }
         }
 
@@ -266,6 +273,16 @@ namespace H3VRAnimator
             Destroy(forwardRotationPoint.gameObject);
             Destroy(backRotationPoint.gameObject);
             Destroy(optionPoint.gameObject);
+
+            foreach(OptionPoint point in optionList)
+            {
+                Destroy(point.gameObject);
+            }
+
+            foreach(EventPoint point in eventsList)
+            {
+                Destroy(point.gameObject);
+            }
         }
 
 

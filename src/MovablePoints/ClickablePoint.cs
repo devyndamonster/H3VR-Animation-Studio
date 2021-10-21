@@ -79,11 +79,11 @@ namespace H3VRAnimator
             //If the hand is already set, then we unfollow the hand
             if (activeHand != null)
             {
-                AnimLogger.Log("Tried to press when already pressed");
+                //AnimLogger.Log("Tried to press when already pressed");
                 return;
             }
 
-            AnimLogger.Log("Button pressed!");
+            //AnimLogger.Log("Button pressed!");
 
             activeHand = AnimationUtils.GetPointingHand();
             savedDist = Vector3.Distance(activeHand.transform.position, transform.position);
@@ -92,7 +92,7 @@ namespace H3VRAnimator
 
         public virtual void ButtonReleased()
         {
-            AnimLogger.Log("Button Released!");
+            //AnimLogger.Log("Button Released!");
 
             activeHand = null;
         }

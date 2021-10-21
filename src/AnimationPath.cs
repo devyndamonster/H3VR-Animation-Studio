@@ -265,6 +265,12 @@ namespace H3VRAnimator
 
         public void DeletePoint(PathAnchor point)
         {
+            PathAnchor prevPoint = GetPrevPoint(point);
+            foreach (EventPoint eventPoint in point.eventsList)
+            {
+                eventPoint.from = prevPoint;
+            }
+
             points.Remove(point);
             GameObject.Destroy(point.gameObject);
             UpdateControlPoints();
@@ -290,6 +296,12 @@ namespace H3VRAnimator
             anchorObject.transform.SetParent(point.transform.parent);
             PathAnchor anchorComp = anchorObject.AddComponent<PathAnchor>();
             anchorComp.path = this;
+
+            //Make sure to update all the events that all on this point
+            foreach(EventPoint eventPoint in point.eventsList)
+            {
+                eventPoint.to = anchorComp;
+            }
 
             points.Insert(index + 1, anchorComp);
             UpdateControlPoints();

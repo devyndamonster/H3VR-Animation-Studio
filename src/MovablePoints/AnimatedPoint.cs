@@ -13,8 +13,17 @@ namespace H3VRAnimator
         public FVRPhysicalObject interactable;
         public bool isPaused = false;
 
+        public Vector3 prevVector = Vector3.zero;
+        public Vector3 currVector = Vector3.zero;
+
+        //Used to track movement direction when sliding along path
+        protected float prevPosition = 0;
+
+
         public override void Update()
         {
+            prevPosition = position;
+            
             CheckForRelease();
             CheckForMove();
 
@@ -26,7 +35,7 @@ namespace H3VRAnimator
             }
 
             Animate();
-            
+            HandleEvents();
             DrawGizmos();
         }
 
@@ -69,27 +78,31 @@ namespace H3VRAnimator
             }
             
 
-            if(interactable != null)
+            if (interactable == null || interactable.IsHeld || interactable.transform.parent != null)
             {
-                if (interactable.IsHeld || interactable.transform.parent != null)
-                {
-                    AnimLogger.Log("Object Is Held!");
-                    interactable = null;
-                    path.animations.Remove(this);
-                    Destroy(gameObject);
-                    return;
-                }
+                //AnimLogger.Log("Object Is Held!");
+                interactable = null;
+                path.animations.Remove(this);
+                Destroy(gameObject);
+                return;
+            }
 
-                if (interactable is FVRPhysicalObject physInteractable)
+            interactable.RootRigidbody.velocity = Vector3.zero;
+            interactable.transform.position = transform.position - offset;
+            interactable.transform.rotation = transform.rotation;
+
+            prevVector = currVector;
+            currVector = transform.position;
+        }
+
+
+        protected void HandleEvents()
+        {
+            foreach(EventPoint point in from.eventsList)
+            {
+                if(prevPosition < point.position && position > point.position)
                 {
-                    physInteractable.RootRigidbody.velocity = Vector3.zero;
-                    physInteractable.transform.position = transform.position - offset;
-                    physInteractable.transform.rotation = transform.rotation;
-                }
-                else
-                {
-                    interactable.transform.position = transform.position - offset;
-                    interactable.transform.rotation = transform.rotation;
+                    point.HandleEvents(this);
                 }
             }
         }
