@@ -21,6 +21,7 @@ namespace H3VRAnimator
         public bool drawRotation = false;
         public int bezierMidPoints = 10;
         public bool drawGizmos = true;
+        public string pathName = "Path";
 
         private CachedCurveData[] cachedCurveData = new CachedCurveData[11];
 

@@ -11,6 +11,7 @@ namespace H3VRAnimator
     [BepInPlugin("devyndamonster.h3vr.animator", "H3VR Animator", "0.1.0")]
     public class H3VRAnimator : BaseUnityPlugin
     {
+        public static SpectatorPanelAnimator SpectatorPanel;
 
         private void Awake()
         {
@@ -23,7 +24,7 @@ namespace H3VRAnimator
         [HarmonyPrefix]
         public static bool AddButton(SpectatorPanel __instance)
         {
-            __instance.gameObject.AddComponent<SpectatorPanelAnimator>();
+            SpectatorPanel = __instance.gameObject.AddComponent<SpectatorPanelAnimator>();
 
             return true;
         }

@@ -27,6 +27,33 @@ namespace H3VRAnimator
             {
                 openBolt.ReleaseSeer();
             }
+
+            else if (eventTarget.interactable is BoltActionRifle boltAction)
+            {
+                boltAction.DropHammer();
+            }
+
+            else if (eventTarget.interactable is BreakActionWeapon breakAction)
+            {
+                breakAction.DropHammer();
+            }
+
+            else if (eventTarget.interactable is Derringer derringer)
+            {
+                derringer.DropHammer();
+            }
+
+            else if (eventTarget.interactable is LeverActionFirearm lever)
+            {
+                lever.Fire();
+            }
+
+            else if (eventTarget.interactable is TubeFedShotgun shotgun)
+            {
+                shotgun.ReleaseHammer();
+            }
+
+
         }
 
 
@@ -45,6 +72,11 @@ namespace H3VRAnimator
             else if (eventTarget.interactable is OpenBoltReceiver openBolt)
             {
                 openBolt.EjectMag();
+            }
+
+            else if (eventTarget.interactable is BoltActionRifle boltAction)
+            {
+                boltAction.ReleaseMag();
             }
         }
 

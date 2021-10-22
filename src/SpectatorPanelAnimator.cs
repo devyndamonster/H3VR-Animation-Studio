@@ -85,10 +85,13 @@ namespace H3VRAnimator
 
             //Track the new path
             pathButtons.Add(buttonObject);
-            paths.Add(new AnimationPath());
+            string pathName = "Path " + paths.Count;
+            AnimationPath path = new AnimationPath();
+            path.pathName = pathName;
+            paths.Add(path);
 
             Text textComp = buttonObject.gameObject.GetComponent<Text>();
-            textComp.text = "Path " + paths.Count;
+            textComp.text = pathName;
             if (paths.Count == 1) textComp.color = Color.white;
             else textComp.color = Color.grey;
         }
