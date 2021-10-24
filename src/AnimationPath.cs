@@ -62,6 +62,8 @@ namespace H3VRAnimator
 
         public void AddAnimatedPoint(FVRPhysicalObject physObj)
         {
+            physObj.gameObject.name = "Animated_" + physObj.gameObject.name;
+
             GameObject animatedPoint = new GameObject("AnimatedPoint");
             animatedPoint.transform.position = points[0].transform.position;
             AnimatedPoint point = animatedPoint.AddComponent<AnimatedPoint>();

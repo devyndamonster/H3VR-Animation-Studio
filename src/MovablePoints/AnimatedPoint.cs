@@ -17,8 +17,18 @@ namespace H3VRAnimator
         public Vector3 currVector = Vector3.zero;
 
         //Used to track movement direction when sliding along path
-        protected float prevPosition = 0;
+        public float prevPosition = 0;
+        public bool changedPathSegment;
 
+        public FVRViveHand fakeHand;
+
+
+        public override void Awake()
+        {
+            base.Awake();
+
+            CreateFakeHand();
+        }
 
         public override void Update()
         {
@@ -40,9 +50,20 @@ namespace H3VRAnimator
         }
 
 
+        private void CreateFakeHand()
+        {
+            fakeHand = gameObject.AddComponent<FVRViveHand>();
+            fakeHand.m_initState = FVRViveHand.HandInitializationState.Uninitialized;
+            fakeHand.Input = new HandInput();
+            fakeHand.Buzzer = gameObject.AddComponent<FVRHaptics>();
+            fakeHand.OtherHand = fakeHand;
+        }
+
+
         protected void Animate()
         {
-            
+            changedPathSegment = false;
+
             //Check for next curve segment if this is not held and the position is far enough
             if (activeHand == null && position >= 1)
             {
@@ -51,14 +72,14 @@ namespace H3VRAnimator
 
                 if (!to.Equals(next))
                 {
-                    from = to;
-                    to = next;
+                    ShiftEndpointsForwards(next);
                 }
 
                 else
                 {
                     from = path.points[0];
                     to = path.points[1];
+                    changedPathSegment = true;
                 }
             }
 
@@ -80,9 +101,6 @@ namespace H3VRAnimator
 
             if (interactable == null || interactable.IsHeld || interactable.transform.parent != null)
             {
-                //AnimLogger.Log("Object Is Held!");
-                interactable = null;
-                path.animations.Remove(this);
                 Destroy(gameObject);
                 return;
             }
@@ -98,13 +116,64 @@ namespace H3VRAnimator
 
         protected void HandleEvents()
         {
+            if (changedPathSegment)
+            {
+                AnimLogger.Log("Skipping because from changed");
+                return;
+            }
+
             foreach(EventPoint point in from.eventsList)
             {
-                if(prevPosition < point.position && position > point.position)
+                //AnimLogger.Log("Looping through event, count: " + from.eventsList.Count);
+
+                if (prevPosition < point.position && position > point.position)
                 {
-                    point.HandleEvents(this);
+                    point.HandleEventForward(this);
+                }
+
+                else if(prevPosition > point.position && position < point.position)
+                {
+                    point.HandleEventBackward(this);
+                }
+            }
+
+            foreach(EventEndPoint endpoint in from.eventEndList)
+            {
+                //AnimLogger.Log("Looping through endpoints, count: " + from.eventEndList.Count);
+
+                if (prevPosition < endpoint.position && position > endpoint.position)
+                {
+                    endpoint.other.HandleEndpointEventForward(this);
+                }
+
+                else if (prevPosition > endpoint.position && position < endpoint.position)
+                {
+                    endpoint.other.HandleEndpointEventBackward(this);
                 }
             }
         }
+
+        protected override void ShiftEndpointsForwards(PathAnchor next)
+        {
+            base.ShiftEndpointsForwards(next);
+            changedPathSegment = true;
+        }
+
+        protected override void ShiftEndpointsBackwards(PathAnchor prev)
+        {
+            base.ShiftEndpointsBackwards(prev);
+            changedPathSegment = true;
+        }
+
+        private void OnDestroy()
+        {
+            if (interactable != null)
+            {
+                interactable.gameObject.name = interactable.gameObject.name.Replace("Animated_", "");
+            }
+
+            path.animations.Remove(this);
+        }
+
     }
 }

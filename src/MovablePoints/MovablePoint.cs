@@ -24,7 +24,7 @@ namespace H3VRAnimator
         }
 
 
-        public void CheckForMove()
+        public virtual void CheckForMove()
         {
             if (activeHand != null)
             {

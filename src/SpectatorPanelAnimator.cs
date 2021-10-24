@@ -20,6 +20,8 @@ namespace H3VRAnimator
         public int selectedPath = 0;
         public SpectatorPanel original;
 
+        public List<ValueSlidingPoint> shaderControls = new List<ValueSlidingPoint>();
+
         private Vector3 pathButtonPos = new Vector3(-1500, 700, 0);
 
         public void Awake()
@@ -48,6 +50,8 @@ namespace H3VRAnimator
             AddTopButton("Toggle Line Mode", new Vector3(700, 1200, 0), ToggleLineMode);
 
             AddTopButton("Toggle Rotation", new Vector3(700, 1300, 0), ToggleDrawRotation);
+
+            AddTopButton("Toggle Night Vision", new Vector3(700, 1400, 0), ToggleNightVision);
 
             AddTopButton("Add Path", new Vector3(-1500, 850, 0), AddPathButton);
 
@@ -167,6 +171,160 @@ namespace H3VRAnimator
 
             paths[selectedPath].AddAnimatedPoint(physObj);
         }
+
+        private void ToggleNightVision()
+        {
+            
+            AnimLogger.Log("Adding night vision to cam!");
+
+            Camera prevCam = GM.CurrentSceneSettings.m_previewCam;
+            Camera specCam = GM.CurrentSceneSettings.m_specCam;
+            
+            CameraEffectScript postEffectPrev = prevCam.GetComponent<CameraEffectScript>();
+            CameraEffectScript postEffectSpec = specCam.GetComponent<CameraEffectScript>();
+
+            if (postEffectPrev == null)
+            {
+                AnimLogger.Log("Cam did not have post effect scropt. Adding it!");
+                postEffectPrev = prevCam.gameObject.AddComponent<CameraEffectScript>();
+            }
+
+            if(postEffectSpec == null)
+            {
+                AnimLogger.Log("Cam did not have post effect scropt. Adding it!");
+                postEffectSpec = specCam.gameObject.AddComponent<CameraEffectScript>();
+            }
+
+
+            if(postEffectPrev.mat != null)
+            {
+                AnimLogger.Log("Cam had night vision enabled, disabling!");
+                postEffectPrev.mat = null;
+                postEffectSpec.mat = null;
+                RemoveShaderControls();
+                
+            }
+
+            else
+            {
+                AnimLogger.Log("Cam had night vision disabled, enabling!");
+                postEffectPrev.mat = H3VRAnimator.NightVisionMaterial;
+                postEffectSpec.mat = H3VRAnimator.NightVisionMaterial;
+                AddShaderControls();
+            }
+            
+        }
+
+
+        private void AddShaderControls()
+        {
+            GameObject intensity = new GameObject("IntensityPoint");
+            intensity.transform.SetParent(transform);
+            intensity.transform.localPosition = Vector3.right * 0.33f;
+            intensity.transform.rotation = transform.rotation;
+            ValueSlidingPoint intensityPoint = intensity.AddComponent<ValueSlidingPoint>();
+            intensityPoint.pointColor = Color.yellow;
+            intensityPoint.maxUp = 0.05f;
+            intensityPoint.maxDown = 0.05f;
+            intensityPoint.maxValue = 2000;
+            intensityPoint.minValue = 0;
+            intensityPoint.multiplier = 5;
+            intensityPoint.value = H3VRAnimator.NightVisionMaterial.GetFloat("_LightSensetivity");
+            intensityPoint.valueChangeEvent = (o) =>
+            {
+                H3VRAnimator.NightVisionMaterial.SetFloat("_LightSensetivity", o);
+            };
+            shaderControls.Add(intensityPoint);
+
+            GameObject noise = new GameObject("NoisePoint");
+            noise.transform.SetParent(transform);
+            noise.transform.localPosition = Vector3.right * 0.35f;
+            noise.transform.rotation = transform.rotation;
+            ValueSlidingPoint noisePoint = noise.AddComponent<ValueSlidingPoint>();
+            noisePoint.pointColor = Color.yellow;
+            noisePoint.maxUp = 0.05f;
+            noisePoint.maxDown = 0.05f;
+            noisePoint.maxValue = 0.01f;
+            noisePoint.minValue = 0;
+            noisePoint.multiplier = 0.0001f;
+            noisePoint.value = H3VRAnimator.NightVisionMaterial.GetFloat("_NoiseScale");
+            noisePoint.valueChangeEvent = (o) =>
+            {
+                H3VRAnimator.NightVisionMaterial.SetFloat("_NoiseScale", o);
+            };
+            shaderControls.Add(noisePoint);
+
+            GameObject r = new GameObject("RedPoint");
+            r.transform.SetParent(transform);
+            r.transform.localPosition = Vector3.right * 0.37f;
+            r.transform.rotation = transform.rotation;
+            ValueSlidingPoint rPoint = r.AddComponent<ValueSlidingPoint>();
+            rPoint.pointColor = Color.yellow;
+            rPoint.maxUp = 0.05f;
+            rPoint.maxDown = 0.05f;
+            rPoint.maxValue = 1;
+            rPoint.minValue = 0;
+            rPoint.multiplier = 0.01f;
+            rPoint.value = H3VRAnimator.NightVisionMaterial.GetColor("_ColorTint").r;
+            rPoint.valueChangeEvent = (o) =>
+            {
+                Color col = H3VRAnimator.NightVisionMaterial.GetColor("_ColorTint");
+                col.r = o;
+                H3VRAnimator.NightVisionMaterial.SetColor("_ColorTint", col);
+            };
+            shaderControls.Add(rPoint);
+
+            GameObject g = new GameObject("GreenPoint");
+            g.transform.SetParent(transform);
+            g.transform.localPosition = Vector3.right * 0.39f;
+            g.transform.rotation = transform.rotation;
+            ValueSlidingPoint gPoint = g.AddComponent<ValueSlidingPoint>();
+            gPoint.pointColor = Color.yellow;
+            gPoint.maxUp = 0.05f;
+            gPoint.maxDown = 0.05f;
+            gPoint.maxValue = 1;
+            gPoint.minValue = 0;
+            gPoint.multiplier = 0.01f;
+            gPoint.value = H3VRAnimator.NightVisionMaterial.GetColor("_ColorTint").g;
+            gPoint.valueChangeEvent = (o) =>
+            {
+                Color col = H3VRAnimator.NightVisionMaterial.GetColor("_ColorTint");
+                col.g = o;
+                H3VRAnimator.NightVisionMaterial.SetColor("_ColorTint", col);
+            };
+            shaderControls.Add(gPoint);
+
+            GameObject b = new GameObject("BluePoint");
+            b.transform.SetParent(transform);
+            b.transform.localPosition = Vector3.right * 0.41f;
+            b.transform.rotation = transform.rotation;
+            ValueSlidingPoint bPoint = b.AddComponent<ValueSlidingPoint>();
+            bPoint.pointColor = Color.yellow;
+            bPoint.maxUp = 0.05f;
+            bPoint.maxDown = 0.05f;
+            bPoint.maxValue = 1;
+            bPoint.minValue = 0;
+            bPoint.multiplier = 0.01f;
+            bPoint.value = H3VRAnimator.NightVisionMaterial.GetColor("_ColorTint").b;
+            bPoint.valueChangeEvent = (o) =>
+            {
+                Color col = H3VRAnimator.NightVisionMaterial.GetColor("_ColorTint");
+                col.b = o;
+                H3VRAnimator.NightVisionMaterial.SetColor("_ColorTint", col);
+            };
+            shaderControls.Add(bPoint);
+
+        }
+
+        private void RemoveShaderControls()
+        {
+            foreach(RangedSlidingPoint point in shaderControls)
+            {
+                Destroy(point.gameObject);
+            }
+            shaderControls.Clear();
+        }
+
 
 
         private void ClearPoints()

@@ -24,6 +24,7 @@ namespace H3VRAnimator
         public List<OptionPoint> optionList = new List<OptionPoint>();
 
         public List<EventPoint> eventsList = new List<EventPoint>();
+        public List<EventEndPoint> eventEndList = new List<EventEndPoint>();
 
         public bool isJumpPoint = false;
 
@@ -182,15 +183,13 @@ namespace H3VRAnimator
             jumpPoint.clickEvent = ToggleJump;
             optionList.Add(jumpPoint);
 
-            
             GameObject addEvent = new GameObject("AddEvent");
             addEvent.transform.SetParent(transform);
             addEvent.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 2);
             OptionPoint eventPoint = addEvent.AddComponent<OptionPoint>();
             eventPoint.optionText.text = "Add Event";
-            eventPoint.clickEvent = AddPathSlidePointAfter;
+            eventPoint.clickEvent = AddEventPoint;
             optionList.Add(eventPoint);
-            
         }
 
 
@@ -207,9 +206,9 @@ namespace H3VRAnimator
         }
 
 
-        private void AddPathSlidePointAfter()
+        private void AddEventPoint()
         {
-            GameObject slide = new GameObject("SlidingPoint");
+            GameObject slide = new GameObject("EventPoint");
             slide.transform.position = transform.position;
             EventPoint slidePoint = slide.AddComponent<EventPoint>();
             slidePoint.pointColor = new Color(((float)217) / 255, ((float)0) / 255, ((float)255) / 255, 1);

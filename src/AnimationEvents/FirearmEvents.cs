@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 
 namespace H3VRAnimator
 {
@@ -13,14 +14,20 @@ namespace H3VRAnimator
         {
             if (eventTarget.interactable is Handgun handgun)
             {
-                handgun.ReleaseSeer();
-                handgun.HasTriggerReset = true;
-                handgun.m_isSeerReady = true;
+                if(handgun.Slide.CurPos == HandgunSlide.SlidePos.Forward)
+                {
+                    handgun.ReleaseSeer();
+                    handgun.HasTriggerReset = true;
+                    handgun.m_isSeerReady = true;
+                }
             }
 
             else if(eventTarget.interactable is ClosedBoltWeapon closedBolt)
             {
-                closedBolt.DropHammer();
+                if(closedBolt.Bolt.CurPos == ClosedBolt.BoltPos.Forward)
+                {
+                    closedBolt.DropHammer();
+                }
             }
 
             else if(eventTarget.interactable is OpenBoltReceiver openBolt)
@@ -52,31 +59,14 @@ namespace H3VRAnimator
             {
                 shotgun.ReleaseHammer();
             }
-
-
         }
 
 
         public static void ReleaseMagazine(AnimatedPoint eventTarget)
         {
-            if (eventTarget.interactable is Handgun handgun)
+            if(eventTarget.interactable is FVRFireArm firearm)
             {
-                handgun.EjectMag();
-            }
-
-            else if (eventTarget.interactable is ClosedBoltWeapon closedBolt)
-            {
-                closedBolt.EjectMag();
-            }
-
-            else if (eventTarget.interactable is OpenBoltReceiver openBolt)
-            {
-                openBolt.EjectMag();
-            }
-
-            else if (eventTarget.interactable is BoltActionRifle boltAction)
-            {
-                boltAction.ReleaseMag();
+                firearm.EjectMag();
             }
         }
 
