@@ -12,7 +12,7 @@ namespace H3VRAnimator
         public AnimationPath path;
 
         public RotationPoint rotationPoint;
-        public SpeedPoint speedPoint;
+        public ValueSlidingPoint speedPoint;
 
         public PositionControlPoint forwardPoint;
         public PositionControlPoint backPoint;
@@ -46,8 +46,11 @@ namespace H3VRAnimator
 
         public override void Update()
         {
-            rotationPoint.transform.position = transform.position + Vector3.up * 0.03f;
+            rotationPoint.transform.position = transform.position + Vector3.up * 0.12f;
+
+            speedPoint.transform.rotation = Quaternion.identity;
             speedPoint.transform.position = transform.position + Vector3.up * 0.06f;
+            speedPoint.RotateToPlayer();
 
             forwardRotationPoint.transform.position = forwardPoint.transform.position + Vector3.up * 0.03f;
             backRotationPoint.transform.position = backPoint.transform.position + Vector3.up * 0.03f;
@@ -67,7 +70,7 @@ namespace H3VRAnimator
         {
             GameObject rotation = new GameObject("RotationPoint");
             rotation.transform.SetParent(transform);
-            rotation.transform.position = transform.position + Vector3.up * 0.03f;
+            rotation.transform.position = transform.position + Vector3.up * 0.12f;
             rotationPoint = rotation.AddComponent<RotationPoint>();
             rotationPoint.pointColor = Color.cyan;
         }
@@ -78,8 +81,14 @@ namespace H3VRAnimator
             GameObject speed = new GameObject("SpeedPoint");
             speed.transform.SetParent(transform);
             speed.transform.position = transform.position + Vector3.up * 0.06f;
-            speedPoint = speed.AddComponent<SpeedPoint>();
+            speedPoint = speed.AddComponent<ValueSlidingPoint>();
             speedPoint.pointColor = Color.yellow;
+            speedPoint.maxDown = 0.03f;
+            speedPoint.maxUp = 0.03f;
+            speedPoint.maxValue = float.MaxValue;
+            speedPoint.minValue = 0;
+            speedPoint.multiplier = 0.25f;
+            speedPoint.SetValue(0.3f);
         }
 
 

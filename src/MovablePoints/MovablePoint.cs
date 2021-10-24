@@ -30,7 +30,7 @@ namespace H3VRAnimator
             {
                 if (!lockPosition)
                 {
-                    transform.position = activeHand.transform.position + activeHand.PointingTransform.forward * savedDist;
+                    transform.position = activeHand.PointingTransform.position + activeHand.PointingTransform.forward * savedDist;
                 }
 
                 if (!lockRotation)

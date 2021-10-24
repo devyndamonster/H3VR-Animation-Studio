@@ -95,7 +95,7 @@ namespace H3VRAnimator
             //Only progress this animation if not paused and not held
             if (!isPaused && activeHand == null)
             {
-                position += Mathf.Lerp(from.speedPoint.speed, to.speedPoint.speed, position) * Time.deltaTime / path.GetDistanceBetweenPoints(from, to);
+                position += Mathf.Lerp(from.speedPoint.value, to.speedPoint.value, position) * Time.deltaTime / path.GetDistanceBetweenPoints(from, to);
             }
             
 

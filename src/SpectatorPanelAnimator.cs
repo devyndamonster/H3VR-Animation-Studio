@@ -218,102 +218,36 @@ namespace H3VRAnimator
 
         private void AddShaderControls()
         {
-            GameObject intensity = new GameObject("IntensityPoint");
-            intensity.transform.SetParent(transform);
-            intensity.transform.localPosition = Vector3.right * 0.33f;
-            intensity.transform.rotation = transform.rotation;
-            ValueSlidingPoint intensityPoint = intensity.AddComponent<ValueSlidingPoint>();
-            intensityPoint.pointColor = Color.yellow;
-            intensityPoint.maxUp = 0.05f;
-            intensityPoint.maxDown = 0.05f;
-            intensityPoint.maxValue = 2000;
-            intensityPoint.minValue = 0;
-            intensityPoint.multiplier = 5;
-            intensityPoint.value = H3VRAnimator.NightVisionMaterial.GetFloat("_LightSensetivity");
-            intensityPoint.valueChangeEvent = (o) =>
+            CreateShaderControlPoint("Light Sensetivity", 0, 2000, 5, H3VRAnimator.NightVisionMaterial.GetFloat("_LightSensetivity"), (o) =>
             {
                 H3VRAnimator.NightVisionMaterial.SetFloat("_LightSensetivity", o);
-            };
-            shaderControls.Add(intensityPoint);
+            });
 
-            GameObject noise = new GameObject("NoisePoint");
-            noise.transform.SetParent(transform);
-            noise.transform.localPosition = Vector3.right * 0.35f;
-            noise.transform.rotation = transform.rotation;
-            ValueSlidingPoint noisePoint = noise.AddComponent<ValueSlidingPoint>();
-            noisePoint.pointColor = Color.yellow;
-            noisePoint.maxUp = 0.05f;
-            noisePoint.maxDown = 0.05f;
-            noisePoint.maxValue = 0.01f;
-            noisePoint.minValue = 0;
-            noisePoint.multiplier = 0.0001f;
-            noisePoint.value = H3VRAnimator.NightVisionMaterial.GetFloat("_NoiseScale");
-            noisePoint.valueChangeEvent = (o) =>
+            CreateShaderControlPoint("Noise Scale", 0, 0.01f, 0.0001f, H3VRAnimator.NightVisionMaterial.GetFloat("_NoiseScale"), (o) =>
             {
                 H3VRAnimator.NightVisionMaterial.SetFloat("_NoiseScale", o);
-            };
-            shaderControls.Add(noisePoint);
+            });
 
-            GameObject r = new GameObject("RedPoint");
-            r.transform.SetParent(transform);
-            r.transform.localPosition = Vector3.right * 0.37f;
-            r.transform.rotation = transform.rotation;
-            ValueSlidingPoint rPoint = r.AddComponent<ValueSlidingPoint>();
-            rPoint.pointColor = Color.yellow;
-            rPoint.maxUp = 0.05f;
-            rPoint.maxDown = 0.05f;
-            rPoint.maxValue = 1;
-            rPoint.minValue = 0;
-            rPoint.multiplier = 0.01f;
-            rPoint.value = H3VRAnimator.NightVisionMaterial.GetColor("_ColorTint").r;
-            rPoint.valueChangeEvent = (o) =>
+            CreateShaderControlPoint("Red Tint", 0, 1, 0.01f, H3VRAnimator.NightVisionMaterial.GetColor("_ColorTint").r, (o) =>
             {
                 Color col = H3VRAnimator.NightVisionMaterial.GetColor("_ColorTint");
                 col.r = o;
                 H3VRAnimator.NightVisionMaterial.SetColor("_ColorTint", col);
-            };
-            shaderControls.Add(rPoint);
+            });
 
-            GameObject g = new GameObject("GreenPoint");
-            g.transform.SetParent(transform);
-            g.transform.localPosition = Vector3.right * 0.39f;
-            g.transform.rotation = transform.rotation;
-            ValueSlidingPoint gPoint = g.AddComponent<ValueSlidingPoint>();
-            gPoint.pointColor = Color.yellow;
-            gPoint.maxUp = 0.05f;
-            gPoint.maxDown = 0.05f;
-            gPoint.maxValue = 1;
-            gPoint.minValue = 0;
-            gPoint.multiplier = 0.01f;
-            gPoint.value = H3VRAnimator.NightVisionMaterial.GetColor("_ColorTint").g;
-            gPoint.valueChangeEvent = (o) =>
+            CreateShaderControlPoint("Green Tint", 0, 1, 0.01f, H3VRAnimator.NightVisionMaterial.GetColor("_ColorTint").g, (o) =>
             {
                 Color col = H3VRAnimator.NightVisionMaterial.GetColor("_ColorTint");
                 col.g = o;
                 H3VRAnimator.NightVisionMaterial.SetColor("_ColorTint", col);
-            };
-            shaderControls.Add(gPoint);
+            });
 
-            GameObject b = new GameObject("BluePoint");
-            b.transform.SetParent(transform);
-            b.transform.localPosition = Vector3.right * 0.41f;
-            b.transform.rotation = transform.rotation;
-            ValueSlidingPoint bPoint = b.AddComponent<ValueSlidingPoint>();
-            bPoint.pointColor = Color.yellow;
-            bPoint.maxUp = 0.05f;
-            bPoint.maxDown = 0.05f;
-            bPoint.maxValue = 1;
-            bPoint.minValue = 0;
-            bPoint.multiplier = 0.01f;
-            bPoint.value = H3VRAnimator.NightVisionMaterial.GetColor("_ColorTint").b;
-            bPoint.valueChangeEvent = (o) =>
+            CreateShaderControlPoint("Blue Tint", 0, 1, 0.01f, H3VRAnimator.NightVisionMaterial.GetColor("_ColorTint").b, (o) =>
             {
                 Color col = H3VRAnimator.NightVisionMaterial.GetColor("_ColorTint");
                 col.b = o;
                 H3VRAnimator.NightVisionMaterial.SetColor("_ColorTint", col);
-            };
-            shaderControls.Add(bPoint);
-
+            });
         }
 
         private void RemoveShaderControls()
@@ -325,6 +259,52 @@ namespace H3VRAnimator
             shaderControls.Clear();
         }
 
+
+
+        private ValueSlidingPoint CreateShaderControlPoint(string shaderField, float minVal, float maxVal, float multiplier, float startingVal, UnityAction<float> valueChangeEvent)
+        {
+            GameObject valObj = new GameObject(shaderField);
+            valObj.transform.SetParent(transform);
+            valObj.transform.localPosition = Vector3.right * 0.375f + Vector3.up * (0.2f - shaderControls.Count * 0.04f);
+            valObj.transform.rotation = transform.rotation;
+            valObj.transform.up = transform.right;
+
+            ValueSlidingPoint valPoint = valObj.AddComponent<ValueSlidingPoint>();
+            valPoint.buttonPoint.transform.rotation = transform.rotation;
+            valPoint.pointColor = Color.yellow;
+            valPoint.maxUp = 0.05f;
+            valPoint.maxDown = 0.05f;
+            valPoint.maxValue = maxVal;
+            valPoint.minValue = minVal;
+            valPoint.multiplier = multiplier;
+            valPoint.SetValue(startingVal);
+            valPoint.valueChangeEvent = valueChangeEvent;
+
+            GameObject fieldCanvas = new GameObject("TextCanvas");
+            fieldCanvas.transform.SetParent(valObj.transform);
+            fieldCanvas.transform.localPosition = Vector3.left * 0.02f;
+            fieldCanvas.transform.rotation = transform.rotation;
+            Canvas canvasComp = fieldCanvas.AddComponent<Canvas>();
+            RectTransform rect = canvasComp.GetComponent<RectTransform>();
+            canvasComp.renderMode = RenderMode.WorldSpace;
+            rect.sizeDelta = new Vector2(1, 1);
+
+            GameObject fieldObj = new GameObject("Text");
+            fieldObj.transform.SetParent(fieldCanvas.transform);
+            fieldObj.transform.localPosition = Vector3.zero;
+            fieldObj.transform.rotation = transform.rotation;
+            fieldObj.transform.localScale = new Vector3(0.0005f, 0.0005f, 0.0005f);
+
+            Text fieldText = fieldObj.AddComponent<Text>();
+            fieldText.font = (Font)Resources.GetBuiltinResource(typeof(Font), "Arial.ttf");
+            fieldText.alignment = TextAnchor.MiddleCenter;
+            fieldText.text = shaderField;
+            fieldText.horizontalOverflow = HorizontalWrapMode.Overflow;
+
+            shaderControls.Add(valPoint);
+
+            return valPoint;
+        }
 
 
         private void ClearPoints()

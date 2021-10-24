@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FistVR;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,7 +19,6 @@ namespace H3VRAnimator
         public Text valueText;
         public UnityAction<float> valueChangeEvent;
 
-
         public override void Awake()
         {
             base.Awake();
@@ -33,12 +33,21 @@ namespace H3VRAnimator
         {
             base.Update();
 
-            if(activeHand != null)
+            if (activeHand != null)
             {
                 UpdateValue();
                 HandleEvents();
             }
         }
+
+        public void RotateToPlayer()
+        {
+            if (drawGizmos)
+            {
+                buttonPoint.transform.rotation = Quaternion.LookRotation(buttonPoint.transform.position - GM.CurrentPlayerBody.Head.position);
+            }
+        }
+
 
         public void UpdateValue()
         {
@@ -52,6 +61,12 @@ namespace H3VRAnimator
             {
                 valueChangeEvent.Invoke(value);
             }
+        }
+
+        public void SetValue(float val)
+        {
+            value = val;
+            UpdateValue();
         }
 
         public override void ButtonReleased()

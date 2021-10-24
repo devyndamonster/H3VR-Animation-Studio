@@ -86,7 +86,7 @@ namespace H3VRAnimator
             //AnimLogger.Log("Button pressed!");
 
             activeHand = AnimationUtils.GetPointingHand();
-            savedDist = Vector3.Distance(activeHand.transform.position, transform.position);
+            savedDist = Vector3.Distance(activeHand.PointingTransform.position, transform.position);
         }
 
 
