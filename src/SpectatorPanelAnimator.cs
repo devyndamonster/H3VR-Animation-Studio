@@ -24,6 +24,9 @@ namespace H3VRAnimator
 
         private Vector3 pathButtonPos = new Vector3(-1500, 700, 0);
 
+        private NightVisionPostEffect postEffectPrev;
+        private NightVisionPostEffect postEffectSpec;
+
         public void Awake()
         {
             AnimLogger.Log("The Spectator Panel just started!");
@@ -180,36 +183,47 @@ namespace H3VRAnimator
             Camera prevCam = GM.CurrentSceneSettings.m_previewCam;
             Camera specCam = GM.CurrentSceneSettings.m_specCam;
             
-            CameraEffectScript postEffectPrev = prevCam.GetComponent<CameraEffectScript>();
-            CameraEffectScript postEffectSpec = specCam.GetComponent<CameraEffectScript>();
+            postEffectPrev = prevCam.GetComponent<NightVisionPostEffect>();
+            postEffectSpec = specCam.GetComponent<NightVisionPostEffect>();
 
             if (postEffectPrev == null)
             {
                 AnimLogger.Log("Cam did not have post effect scropt. Adding it!");
-                postEffectPrev = prevCam.gameObject.AddComponent<CameraEffectScript>();
+                postEffectPrev = prevCam.gameObject.AddComponent<NightVisionPostEffect>();
+                postEffectPrev.nightVisionMat = H3VRAnimator.NightVisionMaterial;
+                postEffectPrev.bloom = H3VRAnimator.BloomMaterial;
             }
 
             if(postEffectSpec == null)
             {
                 AnimLogger.Log("Cam did not have post effect scropt. Adding it!");
-                postEffectSpec = specCam.gameObject.AddComponent<CameraEffectScript>();
+                postEffectSpec = specCam.gameObject.AddComponent<NightVisionPostEffect>();
+                postEffectSpec.nightVisionMat = H3VRAnimator.NightVisionMaterial;
+                postEffectSpec.bloom = H3VRAnimator.BloomMaterial;
             }
 
 
-            if(postEffectPrev.mat != null)
+            if(postEffectPrev.renderNightVision)
             {
                 AnimLogger.Log("Cam had night vision enabled, disabling!");
-                postEffectPrev.mat = null;
-                postEffectSpec.mat = null;
+                postEffectPrev.renderNightVision = false;
+                postEffectPrev.renderBloom = false;
+                postEffectSpec.renderNightVision = false;
+                postEffectSpec.renderBloom = false;
+                prevCam.depthTextureMode = DepthTextureMode.None;
+                specCam.depthTextureMode = DepthTextureMode.None;
                 RemoveShaderControls();
-                
             }
 
             else
             {
                 AnimLogger.Log("Cam had night vision disabled, enabling!");
-                postEffectPrev.mat = H3VRAnimator.NightVisionMaterial;
-                postEffectSpec.mat = H3VRAnimator.NightVisionMaterial;
+                postEffectPrev.renderNightVision = true;
+                postEffectPrev.renderBloom = true;
+                postEffectSpec.renderNightVision = true;
+                postEffectSpec.renderBloom = true;
+                prevCam.depthTextureMode = DepthTextureMode.Depth;
+                specCam.depthTextureMode = DepthTextureMode.Depth;
                 AddShaderControls();
             }
             
@@ -223,9 +237,19 @@ namespace H3VRAnimator
                 H3VRAnimator.NightVisionMaterial.SetFloat("_LightSensetivity", o);
             });
 
-            CreateShaderControlPoint("Noise Scale", 0, 0.01f, 0.0001f, H3VRAnimator.NightVisionMaterial.GetFloat("_NoiseScale"), (o) =>
+            CreateShaderControlPoint("Noise Scale", 0, 0.5f, 0.01f, H3VRAnimator.NightVisionMaterial.GetFloat("_NoiseScale"), (o) =>
             {
                 H3VRAnimator.NightVisionMaterial.SetFloat("_NoiseScale", o);
+            });
+
+            CreateShaderControlPoint("Distance Scale", 0, 1, 0.01f, H3VRAnimator.NightVisionMaterial.GetFloat("_DistanceScale"), (o) =>
+            {
+                H3VRAnimator.NightVisionMaterial.SetFloat("_DistanceScale", o);
+            });
+
+            CreateShaderControlPoint("Distance Offset", 0, 1, 0.01f, H3VRAnimator.NightVisionMaterial.GetFloat("_DistanceOffset"), (o) =>
+            {
+                H3VRAnimator.NightVisionMaterial.SetFloat("_DistanceOffset", o);
             });
 
             CreateShaderControlPoint("Red Tint", 0, 1, 0.01f, H3VRAnimator.NightVisionMaterial.GetColor("_ColorTint").r, (o) =>
@@ -247,6 +271,16 @@ namespace H3VRAnimator
                 Color col = H3VRAnimator.NightVisionMaterial.GetColor("_ColorTint");
                 col.b = o;
                 H3VRAnimator.NightVisionMaterial.SetColor("_ColorTint", col);
+            });
+
+            CreateShaderControlPoint("Bloom Iterations", 1, 5, 1, postEffectSpec.iterations, (o) =>
+            {
+                postEffectSpec.iterations = (int)o;
+            });
+
+            CreateShaderControlPoint("Bloom Threshold", 0, 2, 0.02f, H3VRAnimator.BloomMaterial.GetFloat("_Threshold"), (o) =>
+            {
+                H3VRAnimator.BloomMaterial.SetFloat("_Threshold", o);
             });
         }
 
@@ -282,7 +316,7 @@ namespace H3VRAnimator
 
             GameObject fieldCanvas = new GameObject("TextCanvas");
             fieldCanvas.transform.SetParent(valObj.transform);
-            fieldCanvas.transform.localPosition = Vector3.left * 0.02f;
+            fieldCanvas.transform.position = valObj.transform.position + transform.up * 0.02f;
             fieldCanvas.transform.rotation = transform.rotation;
             Canvas canvasComp = fieldCanvas.AddComponent<Canvas>();
             RectTransform rect = canvasComp.GetComponent<RectTransform>();

@@ -20,6 +20,7 @@ namespace H3VRAnimator
         public static SpectatorPanelAnimator SpectatorPanel;
 
         public static Material NightVisionMaterial;
+        public static Material BloomMaterial;
 
         private void Awake()
         {
@@ -100,8 +101,19 @@ namespace H3VRAnimator
             AssetBundle bundle = AssetBundle.LoadFromFile(path);
             Material[] mats = bundle.LoadAllAssets<Material>();
 
-            AnimLogger.Log("Loaded Materials: " + mats.Length);
-            NightVisionMaterial = mats[0];
+            foreach(Material mat in mats)
+            {
+                AnimLogger.Log("Discovered material: " + mat.name);
+
+                if (mat.name.Contains("Night"))
+                {
+                    NightVisionMaterial = mat;
+                }
+                else if (mat.name.Contains("Bloom"))
+                {
+                    BloomMaterial = mat;
+                }
+            }
 
             return new Empty();
         }
