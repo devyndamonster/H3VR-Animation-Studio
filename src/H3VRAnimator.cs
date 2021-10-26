@@ -57,7 +57,7 @@ namespace H3VRAnimator
         [HarmonyPrefix]
         public static bool PreventAwake(FVRViveHand __instance)
         {
-            if (__instance.gameObject.name.Contains("FakeHand"))
+            if (__instance.gameObject.name.Contains("AnimatedPoint"))
             {
                 AnimLogger.Log("Preventing fake hand from awaking");
                 return false;
@@ -71,7 +71,7 @@ namespace H3VRAnimator
         [HarmonyPrefix]
         public static bool PreventStart(FVRViveHand __instance)
         {
-            if(__instance.gameObject.name.Contains("FakeHand"))
+            if(__instance.gameObject.name.Contains("AnimatedPoint"))
             {
                 AnimLogger.Log("Preventing fake hand from starting");
                 return false;
@@ -81,17 +81,60 @@ namespace H3VRAnimator
         }
 
 
-        [HarmonyPatch(typeof(FVRPhysicalObject), "FU")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPatch(typeof(FVRPhysicalObject), "FVRFixedUpdate")] // Specify target method with HarmonyPatch attribute
         [HarmonyPrefix]
         public static bool PreventUpdate(FVRPhysicalObject __instance)
         {
-            if (__instance.IsHeld && __instance.gameObject.name.Contains("Animated_"))
+            if (__instance.IsHeld && __instance.m_hand.Equals(__instance.m_hand.OtherHand))
             {
+                //AnimLogger.Log("Skipping phys obj update!");
                 return false;
             }
 
             return true;
         }
+
+
+        [HarmonyPatch(typeof(FVRFireArm), "FVRFixedUpdate")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPrefix]
+        public static bool PreventFirearmUpdate(FVRFireArm __instance)
+        {
+            if (__instance.IsHeld && __instance.m_hand.Equals(__instance.m_hand.OtherHand))
+            {
+                //AnimLogger.Log("Skipping firearm update!");
+                return false;
+            }
+
+            return true;
+        }
+
+
+        [HarmonyPatch(typeof(FVRFireArm), "IsTwoHandStabilized")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPrefix]
+        public static bool PreventTwoHand(FVRFireArm __instance, ref bool __result)
+        {
+            if (__instance.IsHeld && __instance.m_hand.Equals(__instance.m_hand.OtherHand))
+            {
+                __result = false;
+                return false;
+            }
+
+            return true;
+        }
+
+        [HarmonyPatch(typeof(FVRFireArm), "IsShoulderStabilized")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPrefix]
+        public static bool PreventShoulder(FVRFireArm __instance, ref bool __result)
+        {
+            if (__instance.IsHeld && __instance.m_hand.Equals(__instance.m_hand.OtherHand))
+            {
+                __result = false;
+                return false;
+            }
+
+            return true;
+        }
+
 
         public Empty LoadShaders(FileSystemInfo info)
         {

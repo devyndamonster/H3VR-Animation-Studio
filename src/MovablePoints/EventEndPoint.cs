@@ -10,5 +10,20 @@ namespace H3VRAnimator
 
         public EventPoint other;
 
+        protected override void ShiftEndpointsForwards(PathAnchor next)
+        {
+            from.eventEndList.Remove(this);
+            base.ShiftEndpointsForwards(next);
+            from.eventEndList.Add(this);
+        }
+
+
+        protected override void ShiftEndpointsBackwards(PathAnchor prev)
+        {
+            from.eventEndList.Remove(this);
+            base.ShiftEndpointsBackwards(prev);
+            from.eventEndList.Add(this);
+        }
+
     }
 }

@@ -62,8 +62,6 @@ namespace H3VRAnimator
 
         public void AddAnimatedPoint(FVRPhysicalObject physObj)
         {
-            physObj.gameObject.name = "Animated_" + physObj.gameObject.name;
-
             GameObject animatedPoint = new GameObject("AnimatedPoint");
             animatedPoint.transform.position = points[0].transform.position;
             AnimatedPoint point = animatedPoint.AddComponent<AnimatedPoint>();
@@ -75,6 +73,8 @@ namespace H3VRAnimator
             point.radius = .005f;
             point.isPaused = isPaused;
             point.interactable = physObj;
+            point.interactable.m_hand = point.fakeHand;
+            point.interactable.IsHeld = true;
             point.drawGizmos = drawGizmos;
 
             animations.Add(point);
@@ -553,6 +553,7 @@ namespace H3VRAnimator
                 point.buttonPoint.SetActive(drawGizmos);
             }
         }
+
     }
 
 }

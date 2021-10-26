@@ -12,7 +12,9 @@ namespace H3VRAnimator
 {
     public class EventPoint : PathSlidingPoint
     {
-        public List<UnityAction<AnimatedPoint>> events = new List<UnityAction<AnimatedPoint>>();
+        public List<UnityAction<AnimatedPoint>> enterEvents = new List<UnityAction<AnimatedPoint>>();
+        public List<UnityAction<AnimatedPoint>> stayEvents = new List<UnityAction<AnimatedPoint>>();
+        public List<UnityAction<AnimatedPoint>> exitEvents = new List<UnityAction<AnimatedPoint>>();
 
         public GameObject textObject;
         public Text eventText;
@@ -79,7 +81,9 @@ namespace H3VRAnimator
             {
                 foreach(AnimatedPoint point in trackedAnimations)
                 {
-                    foreach (UnityAction<AnimatedPoint> action in events)
+                    if (!point.IsHeldByFakeHand()) continue;
+
+                    foreach (UnityAction<AnimatedPoint> action in stayEvents)
                     {
                         action.Invoke(point);
                     }
@@ -100,7 +104,7 @@ namespace H3VRAnimator
                 endPoint.path = path;
                 endPoint.from = from;
                 endPoint.to = path.GetNextPoint(to);
-                endPoint.position = 0.5f;
+                endPoint.position = position + ((1 - position) / 2);
                 endPoint.other = this;
 
                 from.eventEndList.Add(endPoint);
@@ -117,6 +121,13 @@ namespace H3VRAnimator
                 Destroy(endPoint.gameObject);
                 endPoint = null;
             }
+        }
+
+        public void ClearEvents()
+        {
+            enterEvents.Clear();
+            stayEvents.Clear();
+            exitEvents.Clear();
         }
 
 
@@ -165,56 +176,15 @@ namespace H3VRAnimator
         {
             ClearOptions();
 
-            GameObject hide = new GameObject("HidePoint");
-            hide.transform.SetParent(transform);
-            hide.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint hidePoint = hide.AddComponent<OptionPoint>();
-            hidePoint.optionText.text = "-";
-            hidePoint.clickEvent = HideOptions;
-            optionList.Add(hidePoint);
-
-            GameObject firearm = new GameObject("FirearmEvents");
-            firearm.transform.SetParent(transform);
-            firearm.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint firearmPoint = firearm.AddComponent<OptionPoint>();
-            firearmPoint.optionText.text = "Firearm Events >";
-            firearmPoint.clickEvent = ShowFirearmEventOptions;
-            optionList.Add(firearmPoint);
-
-            GameObject physics = new GameObject("PhysicsEvents");
-            physics.transform.SetParent(transform);
-            physics.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint physicsPoint = physics.AddComponent<OptionPoint>();
-            physicsPoint.optionText.text = "Physics Events >";
-            physicsPoint.clickEvent = ShowPhysicsEventOptions;
-            optionList.Add(physicsPoint);
-
-            GameObject animation = new GameObject("AnimationEvents");
-            animation.transform.SetParent(transform);
-            animation.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint animationPoint = animation.AddComponent<OptionPoint>();
-            animationPoint.optionText.text = "Animation Events >";
-            animationPoint.clickEvent = ShowAnimationEventOptions;
-            optionList.Add(animationPoint);
-
-            GameObject interaction = new GameObject("InteractionEvents");
-            interaction.transform.SetParent(transform);
-            interaction.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint interactionPoint = interaction.AddComponent<OptionPoint>();
-            interactionPoint.optionText.text = "Interaction Events >";
-            interactionPoint.clickEvent = ShowInteractionEventOptions;
-            optionList.Add(interactionPoint);
-
-            GameObject delete = new GameObject("DeletePoint");
-            delete.transform.SetParent(transform);
-            delete.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint deletePoint = delete.AddComponent<OptionPoint>();
-            deletePoint.optionText.text = "Delete Event";
-            deletePoint.clickEvent = () => {
+            AddEventOption("-", HideOptions);
+            AddEventOption("Firearm Events >", ShowFirearmEventOptions);
+            AddEventOption("Physics Events >", ShowPhysicsEventOptions);
+            AddEventOption("Animation Events >", ShowAnimationEventOptions);
+            AddEventOption("Interaction Events >", ShowInteractionEventOptions);
+            AddEventOption("Delete Event", () => {
                 from.eventsList.Remove(this);
                 Destroy(gameObject);
-            };
-            optionList.Add(deletePoint);
+            });
         }
 
 
@@ -222,13 +192,7 @@ namespace H3VRAnimator
         {
             ClearOptions();
 
-            GameObject expand = new GameObject("ExpandPoint");
-            expand.transform.SetParent(transform);
-            expand.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint expandPoint = expand.AddComponent<OptionPoint>();
-            expandPoint.optionText.text = "+";
-            expandPoint.clickEvent = ExpandOptions;
-            optionList.Add(expandPoint);
+            AddEventOption("+", ExpandOptions);
         }
 
 
@@ -236,65 +200,28 @@ namespace H3VRAnimator
         {
             ClearOptions();
 
-            GameObject back = new GameObject("Back");
-            back.transform.SetParent(transform);
-            back.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint backPoint = back.AddComponent<OptionPoint>();
-            backPoint.optionText.text = "<";
-            backPoint.clickEvent = ExpandOptions;
-            optionList.Add(backPoint);
+            AddEventOption("<", ExpandOptions);
 
-            GameObject fire = new GameObject("FireGun");
-            fire.transform.SetParent(transform);
-            fire.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint firePoint = fire.AddComponent<OptionPoint>();
-            firePoint.optionText.text = "Set Fire Gun";
-            firePoint.clickEvent = () => {
+            AddEventOption("Set Fire Gun", () => {
                 eventText.text = "Fire Gun";
-                events.Clear();
-                events.Add(FirearmEvents.FireGun);
+                ClearEvents();
+                enterEvents.Add(FirearmEvents.FireGun);
                 SetPoint();
-            };
-            optionList.Add(firePoint);
+            });
 
-            GameObject hold = new GameObject("HoldFire");
-            hold.transform.SetParent(transform);
-            hold.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint holdPoint = hold.AddComponent<OptionPoint>();
-            holdPoint.optionText.text = "Set Hold Fire Gun";
-            holdPoint.clickEvent = () => {
-                eventText.text = "Hold Fire Gun";
-                events.Clear();
-                events.Add(FirearmEvents.FireGun);
-                SetRanged();
-            };
-            optionList.Add(holdPoint);
-
-            GameObject mag = new GameObject("DropMag");
-            mag.transform.SetParent(transform);
-            mag.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint dropMag = mag.AddComponent<OptionPoint>();
-            dropMag.optionText.text = "Set Drop Magazine";
-            dropMag.clickEvent = () => {
+            AddEventOption("Set Drop Magazine", () => {
                 eventText.text = "Drop Magazine";
-                events.Clear();
-                events.Add(FirearmEvents.ReleaseMagazine);
+                ClearEvents();
+                enterEvents.Add(FirearmEvents.ReleaseMagazine);
                 SetPoint();
-            };
-            optionList.Add(dropMag);
+            });
 
-            GameObject rack = new GameObject("RackSlide");
-            rack.transform.SetParent(transform);
-            rack.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint rackPoint = rack.AddComponent<OptionPoint>();
-            rackPoint.optionText.text = "Set Rack Slide";
-            rackPoint.clickEvent = () => {
+            AddEventOption("Set Rack Slide", () => {
                 eventText.text = "Rack Slide";
-                events.Clear();
-                events.Add(FirearmEvents.RackSlide);
+                ClearEvents();
+                enterEvents.Add(FirearmEvents.RackSlide);
                 SetPoint();
-            };
-            optionList.Add(rackPoint);
+            });
         }
 
 
@@ -302,39 +229,21 @@ namespace H3VRAnimator
         {
             ClearOptions();
 
-            GameObject back = new GameObject("Back");
-            back.transform.SetParent(transform);
-            back.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint backPoint = back.AddComponent<OptionPoint>();
-            backPoint.optionText.text = "<";
-            backPoint.clickEvent = ExpandOptions;
-            optionList.Add(backPoint);
+            AddEventOption("<", ExpandOptions);
 
-            GameObject drop = new GameObject("DropItem");
-            drop.transform.SetParent(transform);
-            drop.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint dropPoint = drop.AddComponent<OptionPoint>();
-            dropPoint.optionText.text = "Set Drop Item";
-            dropPoint.clickEvent = () => {
+            AddEventOption("Set Drop Item", () => {
                 eventText.text = "Drop Item";
-                events.Clear();
-                events.Add(PhysicalObjectEvents.DropItem);
+                ClearEvents();
+                enterEvents.Add(PhysicalObjectEvents.DropItem);
                 SetPoint();
-            };
-            optionList.Add(dropPoint);
+            });
 
-            GameObject throwItem = new GameObject("ThrowItem");
-            throwItem.transform.SetParent(transform);
-            throwItem.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint throwItemPoint = throwItem.AddComponent<OptionPoint>();
-            throwItemPoint.optionText.text = "Set Throw Item";
-            throwItemPoint.clickEvent = () => {
+            AddEventOption("Set Throw Item", () => {
                 eventText.text = "Throw Item";
-                events.Clear();
-                events.Add(PhysicalObjectEvents.DropItemWithVelocity);
+                ClearEvents();
+                enterEvents.Add(PhysicalObjectEvents.DropItemWithVelocity);
                 SetPoint();
-            };
-            optionList.Add(throwItemPoint);
+            });
         }
 
 
@@ -342,90 +251,108 @@ namespace H3VRAnimator
         {
             ClearOptions();
 
-            GameObject back = new GameObject("Back");
-            back.transform.SetParent(transform);
-            back.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint backPoint = back.AddComponent<OptionPoint>();
-            backPoint.optionText.text = "<";
-            backPoint.clickEvent = ExpandOptions;
-            optionList.Add(backPoint);
+            AddEventOption("<", ExpandOptions);
 
-            GameObject up = new GameObject("InteractionUp");
-            up.transform.SetParent(transform);
-            up.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint upPoint = up.AddComponent<OptionPoint>();
-            upPoint.optionText.text = "Set Touchpad Up";
-            upPoint.clickEvent = () => {
+            AddEventOption("Set Touchpad Up", () => {
                 eventText.text = "Touchpad Up";
-                events.Clear();
-                events.Add((o) =>
+                ClearEvents();
+                enterEvents.Add((o) =>
                 {
                     InteractionEvents.TouchpadPressed(o, Vector2.up);
                 });
                 SetPoint();
-            };
-            optionList.Add(upPoint);
+            });
 
-            GameObject down = new GameObject("InteractionDown");
-            down.transform.SetParent(transform);
-            down.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint downPoint = down.AddComponent<OptionPoint>();
-            downPoint.optionText.text = "Set Touchpad Down";
-            downPoint.clickEvent = () => {
+            AddEventOption("Set Touchpad Down", () => {
                 eventText.text = "Touchpad Down";
-                events.Clear();
-                events.Add((o) =>
+                ClearEvents();
+                enterEvents.Add((o) =>
                 {
                     InteractionEvents.TouchpadPressed(o, Vector2.down);
                 });
                 SetPoint();
-            };
-            optionList.Add(downPoint);
+            });
 
-            GameObject left = new GameObject("InteractionLeft");
-            left.transform.SetParent(transform);
-            left.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint leftPoint = left.AddComponent<OptionPoint>();
-            leftPoint.optionText.text = "Set Touchpad Left";
-            leftPoint.clickEvent = () => {
+            AddEventOption("Set Touchpad Left", () => {
                 eventText.text = "Touchpad Left";
-                events.Clear();
-                events.Add((o) =>
+                ClearEvents();
+                enterEvents.Add((o) =>
                 {
                     InteractionEvents.TouchpadPressed(o, Vector2.left);
                 });
                 SetPoint();
-            };
-            optionList.Add(leftPoint);
+            });
 
-            GameObject right = new GameObject("InteractionRight");
-            right.transform.SetParent(transform);
-            right.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint rightPoint = right.AddComponent<OptionPoint>();
-            rightPoint.optionText.text = "Set Touchpad Right";
-            rightPoint.clickEvent = () => {
+            AddEventOption("Set Touchpad Right", () => {
                 eventText.text = "Touchpad Right";
-                events.Clear();
-                events.Add((o) =>
+                ClearEvents();
+                enterEvents.Add((o) =>
                 {
                     InteractionEvents.TouchpadPressed(o, Vector2.right);
                 });
                 SetPoint();
-            };
-            optionList.Add(rightPoint);
+            });
 
-            GameObject trigger = new GameObject("InteractionTrigger");
-            trigger.transform.SetParent(transform);
-            trigger.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint triggerPoint = trigger.AddComponent<OptionPoint>();
-            triggerPoint.optionText.text = "Set Trigger Pull";
-            triggerPoint.clickEvent = () => {
+            AddEventOption("Set Trigger Pull", () => {
                 eventText.text = "Trigger Pull";
-                events.Clear();
-                events.Add(InteractionEvents.PullTrigger);
+                ClearEvents();
+                enterEvents.Add(InteractionEvents.PullTrigger);
                 SetPoint();
-            };
-            optionList.Add(triggerPoint);
+            });
+
+
+            AddEventOption("Set Hold Touchpad Up", () => {
+                eventText.text = "Hold Touchpad Up";
+                ClearEvents();
+                enterEvents.Add((o) =>
+                {
+                    InteractionEvents.TouchpadHold(o, Vector2.up);
+                });
+                exitEvents.Add(InteractionEvents.TouchpadRelease);
+                SetRanged();
+            });
+
+            AddEventOption("Set Hold Touchpad Down", () => {
+                eventText.text = "Hold Touchpad Down";
+                ClearEvents();
+                enterEvents.Add((o) =>
+                {
+                    InteractionEvents.TouchpadHold(o, Vector2.down);
+                });
+                exitEvents.Add(InteractionEvents.TouchpadRelease);
+                SetRanged();
+            });
+
+            AddEventOption("Set Hold Touchpad Left", () => {
+                eventText.text = "Hold Touchpad Left";
+                ClearEvents();
+                enterEvents.Add((o) =>
+                {
+                    InteractionEvents.TouchpadHold(o, Vector2.left);
+                });
+                exitEvents.Add(InteractionEvents.TouchpadRelease);
+                SetRanged();
+            });
+
+            AddEventOption("Set Hold Touchpad Right", () => {
+                eventText.text = "Hold Touchpad Right";
+                ClearEvents();
+                enterEvents.Add((o) =>
+                {
+                    InteractionEvents.TouchpadHold(o, Vector2.right);
+                });
+                exitEvents.Add(InteractionEvents.TouchpadRelease);
+                SetRanged();
+            });
+
+
+            AddEventOption("Set Trigger Hold", () => {
+                eventText.text = "Trigger Hold";
+                ClearEvents();
+                enterEvents.Add(InteractionEvents.HoldTrigger);
+                exitEvents.Add(InteractionEvents.ReleaseTrigger);
+                SetRanged();
+            });
         }
 
 
@@ -433,29 +360,9 @@ namespace H3VRAnimator
         {
             ClearOptions();
 
-            GameObject back = new GameObject("Back");
-            back.transform.SetParent(transform);
-            back.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint backPoint = back.AddComponent<OptionPoint>();
-            backPoint.optionText.text = "<";
-            backPoint.clickEvent = ExpandOptions;
-            optionList.Add(backPoint);
-
-            GameObject duplicate = new GameObject("Duplicate");
-            duplicate.transform.SetParent(transform);
-            duplicate.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint duplicatePoint = duplicate.AddComponent<OptionPoint>();
-            duplicatePoint.optionText.text = "Duplicate Animation Events >";
-            duplicatePoint.clickEvent = ShowDuplicateEventOptions;
-            optionList.Add(duplicatePoint);
-
-            GameObject move = new GameObject("Move");
-            move.transform.SetParent(transform);
-            move.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint movePoint = move.AddComponent<OptionPoint>();
-            movePoint.optionText.text = "Move Animation Events >";
-            movePoint.clickEvent = ShowMoveEventOptions;
-            optionList.Add(movePoint);
+            AddEventOption("<", ExpandOptions);
+            AddEventOption("Duplicate Animation Events >", ShowDuplicateEventOptions);
+            AddEventOption("Move Animation Events >", ShowMoveEventOptions);
         }
 
 
@@ -463,31 +370,19 @@ namespace H3VRAnimator
         {
             ClearOptions();
 
-            GameObject back = new GameObject("Back");
-            back.transform.SetParent(transform);
-            back.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint backPoint = back.AddComponent<OptionPoint>();
-            backPoint.optionText.text = "<";
-            backPoint.clickEvent = ShowAnimationEventOptions;
-            optionList.Add(backPoint);
+            AddEventOption("<", ShowAnimationEventOptions);
 
-            foreach(AnimationPath path in H3VRAnimator.SpectatorPanel.paths)
+            foreach (AnimationPath path in H3VRAnimator.SpectatorPanel.paths)
             {
-                GameObject duplicate = new GameObject("Duplicate");
-                duplicate.transform.SetParent(transform);
-                duplicate.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-                OptionPoint duplicatePoint = duplicate.AddComponent<OptionPoint>();
-                duplicatePoint.optionText.text = "Duplicate To Path : " + path.pathName;
-                duplicatePoint.clickEvent = () => {
+                AddEventOption("Duplicate To Path : " + path.pathName, () => {
                     eventText.text = "Duplicate To Path : " + path.pathName;
-                    events.Clear();
-                    events.Add((o) =>
+                    enterEvents.Clear();
+                    enterEvents.Add((o) =>
                     {
                         AnimationEvents.DuplicateToPath(o, path);
                     });
                     SetPoint();
-                };
-                optionList.Add(duplicatePoint);
+                });
             }
         }
 
@@ -496,35 +391,35 @@ namespace H3VRAnimator
         {
             ClearOptions();
 
-            GameObject back = new GameObject("Back");
-            back.transform.SetParent(transform);
-            back.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-            OptionPoint backPoint = back.AddComponent<OptionPoint>();
-            backPoint.optionText.text = "<";
-            backPoint.clickEvent = ShowAnimationEventOptions;
-            optionList.Add(backPoint);
+            AddEventOption("<", ShowAnimationEventOptions);
 
-            foreach(AnimationPath path in H3VRAnimator.SpectatorPanel.paths)
+            foreach (AnimationPath path in H3VRAnimator.SpectatorPanel.paths)
             {
-                GameObject move = new GameObject("Move");
-                move.transform.SetParent(transform);
-                move.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
-                OptionPoint movePoint = move.AddComponent<OptionPoint>();
-                movePoint.optionText.text = "Move To Path : " + path.pathName;
-                movePoint.clickEvent = () => {
+                AddEventOption("Move To Path : " + path.pathName, () => {
                     eventText.text = "Move To Path : " + path.pathName;
-                    events.Clear();
-                    events.Add((o) =>
+                    enterEvents.Clear();
+                    enterEvents.Add((o) =>
                     {
                         AnimationEvents.MoveToPath(o, path);
                     });
                     SetPoint();
-                };
-                optionList.Add(movePoint);
+                });
             }
         }
 
 
+        private OptionPoint AddEventOption(string optionText, UnityAction onClick)
+        {
+            GameObject pointObj = new GameObject(optionText);
+            pointObj.transform.SetParent(transform);
+            pointObj.transform.position = transform.position + Vector3.down * 0.03f * (optionList.Count + 1);
+            OptionPoint point = pointObj.AddComponent<OptionPoint>();
+            point.optionText.text = optionText;
+            point.clickEvent = onClick;
+            optionList.Add(point);
+
+            return point;
+        }
 
 
         public void SetGizmosEnabled(bool enabled)
@@ -566,16 +461,15 @@ namespace H3VRAnimator
             {
                 AnimLogger.Log("Handling event forwards, Adding to event, event count: " + trackedAnimations.Count + ", Prev pos: " + eventTarget.prevPosition + ", Pos: " + eventTarget.position);
                 trackedAnimations.Add(eventTarget);
+                eventTarget.activeEvents.Add(this);
             }
 
-            //If this event is just a point event, perform the event
-            else
+            //Now perform the entering event for this animation
+            foreach (UnityAction<AnimatedPoint> action in enterEvents)
             {
-                foreach (UnityAction<AnimatedPoint> action in events)
-                {
-                    action.Invoke(eventTarget);
-                }
+                action.Invoke(eventTarget);
             }
+            
         }
 
         public virtual void HandleEventBackward(AnimatedPoint eventTarget)
@@ -584,7 +478,16 @@ namespace H3VRAnimator
             {
                 AnimLogger.Log("Handling event backwards, removing event, event count: " + trackedAnimations.Count + ", Prev pos: " + eventTarget.prevPosition + ", Pos: " + eventTarget.position);
                 trackedAnimations.Remove(eventTarget);
+                eventTarget.activeEvents.Remove(this);
+
+                //Perform exit for ranged event
+                foreach (UnityAction<AnimatedPoint> action in exitEvents)
+                {
+                    action.Invoke(eventTarget);
+                }
             }
+
+            
         }
 
         public virtual void HandleEndpointEventForward(AnimatedPoint eventTarget)
@@ -593,7 +496,15 @@ namespace H3VRAnimator
             {
                 AnimLogger.Log("Handling endpoint forwards, Removing from event, event count: " + trackedAnimations.Count + ", Prev pos: " + eventTarget.prevPosition + ", Pos: " + eventTarget.position);
                 trackedAnimations.Remove(eventTarget);
+                eventTarget.activeEvents.Remove(this);
+
+                //Perform exit for ranged event
+                foreach (UnityAction<AnimatedPoint> action in exitEvents)
+                {
+                    action.Invoke(eventTarget);
+                }
             }
+
         }
 
         public virtual void HandleEndpointEventBackward(AnimatedPoint eventTarget)
@@ -602,6 +513,13 @@ namespace H3VRAnimator
             {
                 AnimLogger.Log("Handling endpoint backwards, Adding to event, event count: " + trackedAnimations.Count + ", Prev pos: " + eventTarget.prevPosition + ", Pos: " + eventTarget.position);
                 trackedAnimations.Add(eventTarget);
+                eventTarget.activeEvents.Add(this);
+
+                //Perform enter for ranged event
+                foreach (UnityAction<AnimatedPoint> action in enterEvents)
+                {
+                    action.Invoke(eventTarget);
+                }
             }
         }
 

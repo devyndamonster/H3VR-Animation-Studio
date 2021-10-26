@@ -23,7 +23,7 @@ namespace H3VRAnimator
             eventTarget.interactable = null;
 
             physObj.RootRigidbody.useGravity = true;
-            physObj.RootRigidbody.velocity = (eventTarget.currVector - eventTarget.prevVector) / Time.deltaTime;
+            physObj.RootRigidbody.velocity = (eventTarget.transform.position - eventTarget.prevVector) / Time.deltaTime;
         }
 
     }

@@ -183,10 +183,17 @@ namespace H3VRAnimator
             Camera prevCam = GM.CurrentSceneSettings.m_previewCam;
             Camera specCam = GM.CurrentSceneSettings.m_specCam;
             
-            postEffectPrev = prevCam.GetComponent<NightVisionPostEffect>();
-            postEffectSpec = specCam.GetComponent<NightVisionPostEffect>();
+            if(prevCam != null)
+            {
+                postEffectPrev = prevCam.GetComponent<NightVisionPostEffect>();
+            }
 
-            if (postEffectPrev == null)
+            if(specCam != null)
+            {
+                postEffectSpec = specCam.GetComponent<NightVisionPostEffect>();
+            }
+
+            if (postEffectPrev == null && prevCam != null)
             {
                 AnimLogger.Log("Cam did not have post effect scropt. Adding it!");
                 postEffectPrev = prevCam.gameObject.AddComponent<NightVisionPostEffect>();
@@ -194,7 +201,7 @@ namespace H3VRAnimator
                 postEffectPrev.bloom = H3VRAnimator.BloomMaterial;
             }
 
-            if(postEffectSpec == null)
+            if(postEffectSpec == null && specCam != null)
             {
                 AnimLogger.Log("Cam did not have post effect scropt. Adding it!");
                 postEffectSpec = specCam.gameObject.AddComponent<NightVisionPostEffect>();
@@ -203,27 +210,49 @@ namespace H3VRAnimator
             }
 
 
-            if(postEffectPrev.renderNightVision)
+            if (postEffectPrev == null && postEffectSpec == null) return;
+
+            bool enabled = (postEffectPrev != null && postEffectPrev.renderNightVision) || (postEffectSpec != null && postEffectSpec.renderNightVision);
+
+            if(enabled)
             {
                 AnimLogger.Log("Cam had night vision enabled, disabling!");
-                postEffectPrev.renderNightVision = false;
-                postEffectPrev.renderBloom = false;
-                postEffectSpec.renderNightVision = false;
-                postEffectSpec.renderBloom = false;
-                prevCam.depthTextureMode = DepthTextureMode.None;
-                specCam.depthTextureMode = DepthTextureMode.None;
+
+                if(postEffectPrev != null)
+                {
+                    postEffectPrev.renderNightVision = false;
+                    postEffectPrev.renderBloom = false;
+                    prevCam.depthTextureMode = DepthTextureMode.None;
+                }
+                
+                if(postEffectSpec != null)
+                {
+                    postEffectSpec.renderNightVision = false;
+                    postEffectSpec.renderBloom = false;
+                    specCam.depthTextureMode = DepthTextureMode.None;
+                }
+                
                 RemoveShaderControls();
             }
 
             else
             {
                 AnimLogger.Log("Cam had night vision disabled, enabling!");
-                postEffectPrev.renderNightVision = true;
-                postEffectPrev.renderBloom = true;
-                postEffectSpec.renderNightVision = true;
-                postEffectSpec.renderBloom = true;
-                prevCam.depthTextureMode = DepthTextureMode.Depth;
-                specCam.depthTextureMode = DepthTextureMode.Depth;
+
+                if (postEffectPrev != null)
+                {
+                    postEffectPrev.renderNightVision = true;
+                    postEffectPrev.renderBloom = true;
+                    prevCam.depthTextureMode = DepthTextureMode.Depth;
+                }
+
+                if (postEffectSpec != null)
+                {
+                    postEffectSpec.renderNightVision = true;
+                    postEffectSpec.renderBloom = true;
+                    specCam.depthTextureMode = DepthTextureMode.Depth;
+                }
+
                 AddShaderControls();
             }
             
@@ -275,7 +304,14 @@ namespace H3VRAnimator
 
             CreateShaderControlPoint("Bloom Iterations", 1, 5, 1, postEffectSpec.iterations, (o) =>
             {
-                postEffectSpec.iterations = (int)o;
+                if(postEffectPrev != null)
+                {
+                    postEffectPrev.iterations = (int)o;
+                }
+                if(postEffectSpec != null)
+                {
+                    postEffectSpec.iterations = (int)o;
+                }
             });
 
             CreateShaderControlPoint("Bloom Threshold", 0, 2, 0.02f, H3VRAnimator.BloomMaterial.GetFloat("_Threshold"), (o) =>

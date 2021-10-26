@@ -14,11 +14,13 @@ namespace H3VRAnimator
         public bool isPaused = false;
 
         public Vector3 prevVector = Vector3.zero;
-        public Vector3 currVector = Vector3.zero;
+        public Quaternion prevRotation = Quaternion.identity;
 
         //Used to track movement direction when sliding along path
         public float prevPosition = 0;
         public bool changedPathSegment;
+
+        public List<EventPoint> activeEvents = new List<EventPoint>();
 
         public FVRViveHand fakeHand;
 
@@ -32,8 +34,6 @@ namespace H3VRAnimator
 
         public override void Update()
         {
-            prevPosition = position;
-            
             CheckForRelease();
             CheckForMove();
 
@@ -44,9 +44,52 @@ namespace H3VRAnimator
                 Popcron.Gizmos.Sphere(transform.position, .005f, Color.grey);
             }
 
+            if (IsHeldByFakeHand())
+            {
+                interactable.UpdateInteraction(fakeHand);
+            }
+
             Animate();
+            UpdateHandMovement();
             HandleEvents();
             DrawGizmos();
+
+            prevVector = transform.position;
+            prevRotation = transform.rotation;
+            prevPosition = position;
+
+            UpdatePoseOverride();
+        }
+
+        private void UpdateHandMovement()
+        {
+            Vector3 velocity = (transform.position - prevVector) / Time.deltaTime;
+
+            //This creates fluctuation when moving over max or min
+            //Vector3 angularVelocity = (Quaternion.Inverse(prevRotation) * transform.rotation).eulerAngles / Time.deltaTime;
+
+            //I found this bit of code from here: https://forum.unity.com/threads/manually-calculate-angular-velocity-of-gameobject.289462/
+            var deltaRot = transform.rotation * Quaternion.Inverse(prevRotation);
+            var eulerRot = new Vector3(Mathf.DeltaAngle(0, deltaRot.eulerAngles.x), Mathf.DeltaAngle(0, deltaRot.eulerAngles.y), Mathf.DeltaAngle(0, deltaRot.eulerAngles.z));
+
+            Vector3 angularVelocity = eulerRot;
+
+            //AnimLogger.Log("Velocity: " + velocity.ToString("F3") + ", Angular Velocity: " + angularVelocity.ToString("F3"));
+
+            fakeHand.Input.VelLinearLocal = velocity;
+            fakeHand.Input.VelLinearWorld = velocity;
+
+            fakeHand.Input.VelAngularLocal = angularVelocity;
+            fakeHand.Input.VelAngularWorld = angularVelocity;
+        }
+
+
+        private void UpdatePoseOverride()
+        {
+            AnimLogger.Log("Position diff between pose: " + (transform.position - interactable.PoseOverride.position));
+
+            interactable.transform.position = interactable.PoseOverride.position;
+            interactable.transform.rotation = interactable.PoseOverride.rotation;
         }
 
 
@@ -54,6 +97,7 @@ namespace H3VRAnimator
         {
             fakeHand = gameObject.AddComponent<FVRViveHand>();
             fakeHand.m_initState = FVRViveHand.HandInitializationState.Uninitialized;
+            fakeHand.IsInDemoMode = true;
             fakeHand.Input = new HandInput();
             fakeHand.Buzzer = gameObject.AddComponent<FVRHaptics>();
             fakeHand.OtherHand = fakeHand;
@@ -99,7 +143,7 @@ namespace H3VRAnimator
             }
             
 
-            if (interactable == null || interactable.IsHeld || interactable.transform.parent != null)
+            if (!IsHeldByFakeHand() || interactable.transform.parent != null)
             {
                 Destroy(gameObject);
                 return;
@@ -108,9 +152,6 @@ namespace H3VRAnimator
             interactable.RootRigidbody.velocity = Vector3.zero;
             interactable.transform.position = transform.position - offset;
             interactable.transform.rotation = transform.rotation;
-
-            prevVector = currVector;
-            currVector = transform.position;
         }
 
 
@@ -165,11 +206,22 @@ namespace H3VRAnimator
             changedPathSegment = true;
         }
 
+        public bool IsHeldByFakeHand()
+        {
+            return interactable != null && interactable.m_hand.Equals(fakeHand);
+        }
+
         private void OnDestroy()
         {
-            if (interactable != null)
+            if (IsHeldByFakeHand())
             {
-                interactable.gameObject.name = interactable.gameObject.name.Replace("Animated_", "");
+                interactable.IsHeld = false;
+                interactable.m_hand = null;
+            }
+
+            foreach(EventPoint point in activeEvents)
+            {
+                point.trackedAnimations.Remove(this);
             }
 
             path.animations.Remove(this);
