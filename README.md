@@ -6,7 +6,8 @@ Create smooth animations in H3VR! This plugin allows you to animate any physical
 ## Installation
 1. Install the latest x64 version of [BepInEx](https://github.com/BepInEx/BepInEx/releases)
 2. Install [Sodalite](https://github.com/H3VR-Modding/Sodalite)
-3. Unzip this mod into your BepInEx/plugins folder
+3. Install [Stratum](https://github.com/H3VR-Modding/Stratum)
+4. Unzip this mod into your BepInEx/plugins folder
 
 &nbsp;
 
