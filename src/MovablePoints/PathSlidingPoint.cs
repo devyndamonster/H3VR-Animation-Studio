@@ -19,6 +19,8 @@ namespace H3VRAnimator
 
         public override void Update()
         {
+            if (from == null || to == null) Destroy(gameObject);
+
             CheckForRelease();
             CheckForMove();
 

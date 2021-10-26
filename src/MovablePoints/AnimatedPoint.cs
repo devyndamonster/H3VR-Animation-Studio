@@ -24,7 +24,6 @@ namespace H3VRAnimator
 
         public FVRViveHand fakeHand;
 
-
         public override void Awake()
         {
             base.Awake();
@@ -34,6 +33,8 @@ namespace H3VRAnimator
 
         public override void Update()
         {
+            if (from == null || to == null) Destroy(gameObject);
+
             CheckForRelease();
             CheckForMove();
 
@@ -57,8 +58,6 @@ namespace H3VRAnimator
             prevVector = transform.position;
             prevRotation = transform.rotation;
             prevPosition = position;
-
-            UpdatePoseOverride();
         }
 
         private void UpdateHandMovement()
@@ -84,14 +83,6 @@ namespace H3VRAnimator
         }
 
 
-        private void UpdatePoseOverride()
-        {
-            AnimLogger.Log("Position diff between pose: " + (transform.position - interactable.PoseOverride.position));
-
-            interactable.transform.position = interactable.PoseOverride.position;
-            interactable.transform.rotation = interactable.PoseOverride.rotation;
-        }
-
 
         private void CreateFakeHand()
         {
@@ -101,6 +92,14 @@ namespace H3VRAnimator
             fakeHand.Input = new HandInput();
             fakeHand.Buzzer = gameObject.AddComponent<FVRHaptics>();
             fakeHand.OtherHand = fakeHand;
+        }
+
+
+        public void SetInteractable(FVRPhysicalObject physObj)
+        {
+            interactable = physObj;
+            interactable.m_hand = fakeHand;
+            interactable.IsHeld = true;
         }
 
 

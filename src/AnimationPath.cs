@@ -72,9 +72,7 @@ namespace H3VRAnimator
             point.pointColor = Color.green;
             point.radius = .005f;
             point.isPaused = isPaused;
-            point.interactable = physObj;
-            point.interactable.m_hand = point.fakeHand;
-            point.interactable.IsHeld = true;
+            point.SetInteractable(physObj);
             point.drawGizmos = drawGizmos;
 
             animations.Add(point);
@@ -268,10 +266,32 @@ namespace H3VRAnimator
 
         public void DeletePoint(PathAnchor point)
         {
+            //Reasign anchors for events after this point
             PathAnchor prevPoint = GetPrevPoint(point);
             foreach (EventPoint eventPoint in point.eventsList)
             {
                 eventPoint.from = prevPoint;
+            }
+            foreach (EventEndPoint endPoint in point.eventEndList)
+            {
+                endPoint.from = prevPoint;
+            }
+
+            //Reasign anchors for events before this point
+            PathAnchor nextPoint = GetNextPoint(point);
+            foreach (EventPoint eventPoint in prevPoint.eventsList)
+            {
+                eventPoint.to = nextPoint;
+            }
+            foreach (EventEndPoint endPoint in prevPoint.eventEndList)
+            {
+                endPoint.to = nextPoint;
+            }
+
+            foreach(AnimatedPoint animation in animations)
+            {
+                if (animation.from.Equals(point)) animation.from = prevPoint;
+                if (animation.to.Equals(point)) animation.to = nextPoint;
             }
 
             points.Remove(point);
@@ -300,10 +320,18 @@ namespace H3VRAnimator
             PathAnchor anchorComp = anchorObject.AddComponent<PathAnchor>();
             anchorComp.path = this;
 
-            //Make sure to update all the events that all on this point
+            //Make sure to update all the events that are on this point
             foreach(EventPoint eventPoint in point.eventsList)
             {
                 eventPoint.to = anchorComp;
+            }
+            foreach (EventEndPoint endPoint in point.eventEndList)
+            {
+                endPoint.to = anchorComp;
+            }
+            foreach (AnimatedPoint animation in animations)
+            {
+                if (animation.from.Equals(point)) animation.to = anchorComp;
             }
 
             points.Insert(index + 1, anchorComp);

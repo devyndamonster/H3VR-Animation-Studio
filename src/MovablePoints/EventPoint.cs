@@ -182,7 +182,6 @@ namespace H3VRAnimator
             AddEventOption("Animation Events >", ShowAnimationEventOptions);
             AddEventOption("Interaction Events >", ShowInteractionEventOptions);
             AddEventOption("Delete Event", () => {
-                from.eventsList.Remove(this);
                 Destroy(gameObject);
             });
         }
@@ -536,6 +535,11 @@ namespace H3VRAnimator
             if(endPoint != null)
             {
                 Destroy(endPoint.gameObject);
+            }
+
+            if(from != null)
+            {
+                from.eventsList.Remove(this);
             }
         }
     }

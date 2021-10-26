@@ -14,6 +14,8 @@ namespace H3VRAnimator
             FVRPhysicalObject physObj = eventTarget.interactable;
             eventTarget.interactable = null;
 
+            physObj.IsHeld = false;
+            physObj.m_hand = null;
             physObj.RootRigidbody.useGravity = true;
         }
 
@@ -22,6 +24,8 @@ namespace H3VRAnimator
             FVRPhysicalObject physObj = eventTarget.interactable;
             eventTarget.interactable = null;
 
+            physObj.IsHeld = false;
+            physObj.m_hand = null;
             physObj.RootRigidbody.useGravity = true;
             physObj.RootRigidbody.velocity = (eventTarget.transform.position - eventTarget.prevVector) / Time.deltaTime;
         }

@@ -25,5 +25,13 @@ namespace H3VRAnimator
             from.eventEndList.Add(this);
         }
 
+        public void OnDestroy()
+        {
+            if(from != null)
+            {
+                from.eventEndList.Remove(this);
+            }
+        }
+
     }
 }
